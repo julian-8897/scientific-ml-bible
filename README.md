@@ -111,7 +111,7 @@ scoped tightly.
 
 If this reference is useful in your work, you can cite it informally as:
 
-> J. Cunha, *A Bible of Scientific Machine Learning*, GitHub repository,
+> J. Chan, *A Bible of Scientific Machine Learning*, GitHub repository,
 > 2026. https://github.com/julian-8897/scientific-ml-bible
 
 ## License
