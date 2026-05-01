@@ -1,0 +1,150 @@
+\chapter{Emerging Trends (2024--2026)}
+\label{ch:emerging}
+
+\epigraph{\itshape The cutting edge is where bibliographies become
+incomplete.}{}
+
+This chapter surveys directions that are still moving fast and likely
+to shape the next phase of SciML. Citations indicate vintage 2024--2026.
+
+\section{Foundation models for physics}
+\paragraph{Multiple Physics Pretraining (MPP)~\cite{mccabe2024mpp}.}
+Train a single transformer on diverse physical fields (compressible
+NS, MHD, shear flows) using a unified channel-tokenised representation;
+fine-tune to new tasks with little data.
+
+\paragraph{Poseidon~\cite{herde2024poseidon}.}
+Multiscale operator transformer pretrained on a heterogeneous PDE mix
+with semi-group training; demonstrates strong transfer to unseen PDE
+families and downstream sample efficiency.
+
+\paragraph{DPOT~\cite{hao2024dpot}.}
+Denoising pretrained operator transformer: combine masked autoencoding
+with operator regression to scale across PDE corpora.
+
+\paragraph{Other entrants.}
+\begin{itemize}
+\item \textbf{Aurora} (Microsoft, 2024): foundation atmospheric model for
+weather, air quality, ocean.
+\item \textbf{NeuralGCM~\cite{kochkov2024neuralgcm}}: differentiable
+hybrid GCM with skill matching ECMWF on medium-range forecasts.
+\item \textbf{GenCast~\cite{price2024gencast}}: diffusion ensemble
+forecaster, top of WeatherBench 2.
+\item \textbf{ORBIT (ORNL)}: 100-billion-parameter weather model on
+Frontier.
+\item \textbf{Pangu, GraphCast, FourCastNet}: 2022--2023 progenitors;
+the field's first ``GPT moments''.
+\end{itemize}
+
+\paragraph{What is still missing.}
+\begin{itemize}
+\item Tokenisation of heterogeneous physical fields (different units,
+symmetries, dimensionality).
+\item Standardised evaluation across PDE families.
+\item Truly equivariant foundation models at scale.
+\item Long-horizon stability beyond a few hundred autoregressive steps.
+\item Open data + open weights: still patchy outside weather/climate.
+\end{itemize}
+
+\section{Diffusion and flow-based generative simulators}
+The 2025 wave fuses generative modelling with PDE solving:
+\begin{itemize}
+\item \textbf{PDE-Refiner, PDE-Diffusion}: iterative denoising as a
+universal post-processor for operator outputs.
+\item \textbf{SimDiffPDE~\cite{simdiffpde2025}}: plain transformer
+diffusion as a competitive PDE solver across a wide problem set.
+\item \textbf{PBFM~\cite{pbfm2025}}: physics-based flow matching
+imposing PDE residuals into the flow-matching objective.
+\item \textbf{GenCast}: probabilistic ensemble forecasting at
+state-of-the-art skill.
+\item \textbf{Diffusion priors with physics-guided
+inference}~\cite{diffphys2026}: train task-agnostic priors, condition at
+sampling time on PDE residuals --- decoupling priors from PDE
+specifications.
+\end{itemize}
+
+\section{Transformer operators}
+Transformers are the architecture backbone for the largest 2024--2026
+SciML models:
+\begin{itemize}
+\item Attention naturally handles unstructured / variable-resolution
+inputs.
+\item Tokenisation of physical fields via patches, points, or learned
+tokens.
+\item Cross-attention between query coordinates and conditioning
+fields (DeepONet-style branches).
+\item Adaptive attention windows for multiscale problems.
+\end{itemize}
+Examples: Transolver, GAOT, OFormer, GNOT, MPP, DPOT, Poseidon.
+
+\section{Rethinking PINNs}
+A 2025 NeurIPS result~\cite{rethinking2025pinn} reframes PINN failure
+modes as \emph{precision-induced optimisation pathologies} rather than
+fundamental landscape problems --- L-BFGS' default convergence test
+fires too early in FP32. Switching to FP64 and using a stricter
+tolerance recovers vanilla-PINN convergence on benchmarks previously
+considered unsolvable. This is reshaping how the community discusses
+the limits of PINN training.
+
+\section{Equation discovery at scale}
+\begin{itemize}
+\item \textbf{End-to-end transformer symbolic regression} (NeSymRes,
+SymbolicGPT, OmegaPRM-style search) is closing on PySR for benchmark
+problems.
+\item \textbf{LLM-guided equation discovery}: large language models
+proposing candidate symbolic forms, validated by numerical fitting
+(LaSR, MathConstellation).
+\item \textbf{Physics-aware program synthesis}: combining differentiable
+physics with neural-symbolic search for governing equations, hybrid
+ODEs, and stochastic models.
+\end{itemize}
+
+\section{AI for science programmes}
+National-scale initiatives are reshaping funding and data:
+\begin{itemize}
+\item \textbf{DOE Foundation Models for Science} programmes (US):
+billions of CPU/GPU hours, multi-physics datasets, public foundation
+models.
+\item \textbf{EU AI Factories / Destination Earth}: digital twins of
+the planet with hybrid SciML.
+\item \textbf{UK AISI / Royal Society reports} on AI in science.
+\item \textbf{Industry labs}: DeepMind (GenCast, AlphaFold), NVIDIA
+Modulus, Microsoft (Aurora, DiG, MatterGen), Meta FAIR (OC, ESM).
+\end{itemize}
+
+\section{Quantum-enhanced SciML}
+Quantum-classical hybrid solvers (variational quantum eigensolvers,
+quantum signal processing) intersect with neural surrogates for
+near-term quantum chemistry and lattice QFT. Currently early-stage but
+worth tracking.
+
+\section{Active learning, autonomous experimentation, and AI agents}
+LLM-powered agents that orchestrate simulation $+$ experiment $+$ ML
+modelling are an emerging mode. Examples: A-Lab (materials), ChemCrow,
+self-driving labs in materials science, agentic SciML pipelines that
+plan, run, and analyse simulations end-to-end.
+
+\section{Reinforcement learning for control of dynamical systems}
+\begin{itemize}
+\item \textbf{Plasma control} (TCV, ITER digital twins).
+\item \textbf{Fluid control} (drag reduction, mixing).
+\item \textbf{Climate engineering scenarios} (still controversial).
+\item Differentiable physics + policy-gradient RL is converging into a
+unified control framework.
+\end{itemize}
+
+\section{Where to bet next}
+\begin{insight}{Five-year outlook}
+\begin{itemize}
+\item Foundation operators will become commodity; the moat moves to
+\emph{data + downstream finetuning} pipelines.
+\item Probabilistic / generative surrogates will overtake deterministic
+ones for any high-stakes application requiring UQ.
+\item Equivariant + symplectic + transformer hybrids are likely
+architectural sweet spots.
+\item Hybrid mechanistic + neural models (UDEs, NeuralGCM) will outpace
+pure-NN approaches in safety-critical domains.
+\item LLM-mediated equation discovery and agentic SciML pipelines will
+democratise method design.
+\end{itemize}
+\end{insight}

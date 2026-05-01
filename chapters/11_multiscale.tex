@@ -1,0 +1,94 @@
+\chapter{Multiscale and Multi-Physics SciML}
+\label{ch:multiscale}
+
+\epigraph{\itshape Nature does not separate scales for our convenience.}{}
+
+Most real-world physical problems are inherently multiscale.
+Turbulence ranges from Kolmogorov microscales to integral scales;
+biology spans angstroms to organisms; the climate couples cloud
+microphysics to planetary circulation. Resolving every scale directly
+is computationally hopeless --- which is why multiscale methods are a
+recurring battleground for SciML.
+
+\section{Classical multiscale methods}
+\begin{itemize}
+\item \textbf{Homogenisation}: derive an effective equation by averaging
+over a microstructure.
+\item \textbf{HMM (heterogeneous multiscale method)}: alternate between
+macro and micro solvers.
+\item \textbf{Multigrid / multiresolution}: hierarchies of grids.
+\item \textbf{Wavelet methods}: scale-adaptive bases.
+\item \textbf{Quasi-continuum / coarse-graining}: bridging atomistic and
+continuum.
+\end{itemize}
+
+\section{Where ML fits}
+\begin{itemize}
+\item Learn microscale closures that feed into macroscale solvers
+(\cref{ch:hybrid-ude}).
+\item Multi-resolution neural operators (U-FNO, multiscale
+transformer).
+\item Differentiable multigrid where smoothers are neural.
+\item Coarse-graining via diffusion models that preserve statistical
+ensembles of fine-scale fields.
+\end{itemize}
+
+\section{Foundation models for multi-physics}
+A 2024--2026 trend: train one model on multiple PDE families, then
+fine-tune. Key examples (also revisited in \cref{ch:emerging}):
+\begin{itemize}
+\item \textbf{Multiple Physics Pretraining (MPP)}~\cite{mccabe2024mpp}.
+\item \textbf{DPOT}~\cite{hao2024dpot}: denoising pretrained operator
+transformer.
+\item \textbf{Poseidon}~\cite{herde2024poseidon}.
+\item \textbf{The Well}~\cite{ohana2024well}: 15 TB of multi-physics
+simulation data for pretraining.
+\end{itemize}
+
+\section{Coupled physics: examples}
+\begin{itemize}
+\item \textbf{Fluid--structure interaction}: differentiable simulators
+plus surrogate closure models.
+\item \textbf{Climate--ocean--biogeochemistry}: NeuralGCM-style hybrid
+GCMs.
+\item \textbf{Plasma + EM fields}: gyrokinetic surrogates with neural
+closures.
+\item \textbf{Reactive flows}: neural surrogates for combustion
+chemistry coupled with CFD.
+\item \textbf{Astrophysical n-body + gas + radiation}: equivariant
+GNNs + radiative transfer surrogates.
+\end{itemize}
+
+\section{Scale invariance and dimensional analysis}
+\paragraph{Self-similar problems.}
+Many PDEs admit scaling symmetries (e.g.\ Navier--Stokes Reynolds
+similarity). Architectures that respect scale invariance generalise
+across regimes. Dimensional analysis (Buckingham $\pi$) reduces
+parameter spaces; embedding it as inductive bias narrows the search.
+
+\paragraph{Renormalisation-group ideas.}
+Recent work treats coarse-graining as a learned RG flow, particularly
+in statistical physics and lattice QFT, with normalising flows
+parameterising the renormalisation map.
+
+\section{Practical advice}
+\begin{recipe}{Multiscale SciML workflow}
+\begin{enumerate}
+\item Identify scale separation; if present, design hybrid micro/macro
+schemes.
+\item Decide whether ML replaces, accelerates, or closes a sub-step.
+\item Validate at each scale before coupling --- small errors at fine
+scales explode at coarse scales.
+\item Quantify uncertainty across scales; conformal envelopes around
+coarse-grained predictions.
+\item Where possible, use foundation operators pretrained on multi-scale
+corpora as starting points.
+\end{enumerate}
+\end{recipe}
+
+\begin{pitfall}{Closure feedback loops}
+A neural closure trained offline (one-shot) often fails when coupled
+back into a solver: the input distribution shifts as the solver
+evolves under the learned closure. Train \emph{online} (with the
+solver in the loop) or use distribution-shift-robust losses.
+\end{pitfall}

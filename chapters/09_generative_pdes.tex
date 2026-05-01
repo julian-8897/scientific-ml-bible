@@ -1,0 +1,117 @@
+\chapter{Generative Models for Dynamical Systems}
+\label{ch:generative}
+
+\epigraph{\itshape The future of simulation is sampling.}{(Folk wisdom,
+SciML circles, c.\ 2024)}
+
+\section{Why generative?}
+Many physical systems are inherently stochastic (turbulence,
+multiphase flows, ensemble forecasts, climate). Even deterministic
+PDEs benefit from probabilistic surrogates that quantify uncertainty
+and recover multimodal distributions. Generative models provide
+\emph{distributions over solutions} rather than point predictions.
+
+\section{Diffusion models}
+\subsection{Score-based formulation}
+Define a forward SDE that perturbs data into noise:
+\begin{equation}
+\dd \bm{X}_t = \bm{f}(\bm{X}_t,t)\dd t + g(t)\dd \bm{W}_t,
+\qquad t\in[0,T].
+\end{equation}
+The reverse SDE generating samples from $p_T$ back to $p_0$ is
+\begin{equation}
+\dd \bm{X}_t = \big[\bm{f}(\bm{X}_t,t) - g(t)^2\nabla\log p_t(\bm{X}_t)\big]\dd t + g(t)\dd \bar{\bm{W}}_t.
+\end{equation}
+The score $\nabla\log p_t$ is learned by score
+matching~\cite{song2021scoresde}. Equivalent ODE formulation
+(``probability flow ODE'') gives deterministic sampling.
+
+\subsection{Diffusion for PDEs}
+Diffusion models are increasingly used as PDE surrogates and
+super-resolvers:
+\begin{itemize}
+\item \textbf{PDE-Refiner}~\cite{lippe2023pderefiner}: iterative noise
+denoising at multiple scales fixes spectral defects of single-shot
+operators.
+\item \textbf{DYffusion}~\cite{cachay2023dyffusion}: temporal diffusion
+models for stochastic forecasting.
+\item \textbf{SimDiffPDE}~\cite{simdiffpde2025}: image-to-image
+transformer diffusion as a unified PDE solver.
+\item \textbf{Diffusion priors with physics-guided
+inference}~\cite{diffphys2026}: train a generic diffusion prior; condition
+at inference on PDE residual via guidance.
+\item \textbf{GenCast}~\cite{price2024gencast}: diffusion-based ensemble
+weather forecasting outperforming top operational systems.
+\end{itemize}
+
+\subsection{Conditional / guided diffusion}
+\begin{itemize}
+\item \textbf{Classifier-free guidance}: train conditional and
+unconditional networks jointly.
+\item \textbf{Plug-and-play physics guidance}: at sampling, add a
+physics-based correction term $-\lambda \nabla \|\Nop[\hat u]\|^2$ to
+the score.
+\item \textbf{Posterior sampling for inverse problems} (DPS, $\Pi$GDM):
+combine diffusion priors with likelihoods $p(\bm{y}|\bm{x})$ for
+data assimilation, super-resolution, sparse-view reconstruction.
+\end{itemize}
+
+\section{Flow matching and stochastic interpolants}
+\paragraph{Flow matching}~\cite{lipman2023flowmatching}.
+Choose an interpolation $\bm{x}_t = \alpha_t\bm{x}_1 + \sigma_t\bm{x}_0$
+between data $\bm{x}_1$ and noise $\bm{x}_0$, with target velocity
+$\bm{u}_t(\bm{x})=\E[\dot{\bm{x}}_t|\bm{x}_t=\bm{x}]$. Train
+$\bm{v}_\theta(\bm{x},t)$ by regression on conditional velocities ---
+no SDE simulation, no score estimation.
+\paragraph{Stochastic interpolants}~\cite{albergo2023interpolants}.
+Generalise flow matching with arbitrary interpolation paths and noise
+schedules.
+\paragraph{Physics-Based Flow Matching (PBFM)~\cite{pbfm2025}.}
+Augment the flow-matching loss with PDE residuals and algebraic
+constraints, so the learned velocity field generates physically
+consistent samples.
+
+\section{Generative ensembles for weather and climate}
+A 2024--2025 milestone: ML-based ensemble systems (GenCast, NeuralGCM
+ensembles) match or surpass operational ensembles in skill while
+running orders of magnitude faster on accelerators. Implications for
+SciML:
+\begin{itemize}
+\item Foundation operators (\cref{ch:emerging}) train deterministic
+surrogates; diffusion sits on top to provide ensemble spread.
+\item Calibration and reliability metrics (CRPS, rank histograms)
+become as important as RMSE.
+\end{itemize}
+
+\section{GANs and energy-based models in SciML}
+While diffusion has overtaken GANs, mention:
+\begin{itemize}
+\item \textbf{Physics-informed GANs}: residual losses on the generator
+output for super-resolution of turbulence, downscaling.
+\item \textbf{Energy-based models / score networks}: useful when the
+unnormalised density is the natural object (statistical mechanics,
+molecular dynamics free energy).
+\end{itemize}
+
+\section{Practical considerations}
+\begin{recipe}{Training a diffusion-based PDE surrogate}
+\begin{enumerate}
+\item Choose noise schedule (variance-preserving, variance-exploding,
+EDM/Karras parameterisation).
+\item Architectural backbone: U-Net for grids, transformers / FNO for
+heterogeneous data.
+\item Condition on PDE coefficients, BCs, ICs, time index.
+\item Loss: $\bm{v}$-prediction or $\epsilon$-prediction; physics
+residual penalty optional.
+\item Sampling: deterministic ODE (DDIM, EDM) for speed, SDE for
+diversity; few-step distillation for inference.
+\end{enumerate}
+\end{recipe}
+
+\begin{pitfall}{Generative samples that are not physical}
+A diffusion model that scores well on pixel-MSE may still produce
+samples violating mass conservation, divergence-free constraints, or
+boundary conditions. Add hard projections onto the constraint manifold
+(divergence-free projection for incompressible flows) or physics-guided
+sampling.
+\end{pitfall}

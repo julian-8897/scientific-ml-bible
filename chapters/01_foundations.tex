@@ -1,0 +1,163 @@
+\chapter{Foundations of Dynamical Systems}
+\label{ch:foundations}
+
+\epigraph{\itshape The whole of science is nothing more than a refinement of
+everyday thinking.}{Albert Einstein}
+
+\section{What is a dynamical system?}
+A \emph{dynamical system} is a triple $(M,T,\Phi)$ where $M$ is a state
+space (a manifold), $T$ is a time set (typically $\R$ or $\Z$), and
+$\Phi:T\times M\to M$ is an evolution map satisfying the semi-group
+axioms
+\begin{align}
+\Phi(0,\bm{x})&=\bm{x},\\
+\Phi(t+s,\bm{x})&=\Phi(t,\Phi(s,\bm{x})).
+\end{align}
+Continuous-time systems are usually specified by an ODE
+\begin{equation}
+\dot{\bm{x}} = \bm{f}(\bm{x},t;\mu),\qquad \bm{x}(0)=\bm{x}_0,
+\label{eq:ode}
+\end{equation}
+with parameter $\mu\in\R^p$. Discrete systems are given by a map
+$\bm{x}_{k+1}=\bm{F}(\bm{x}_k)$. Spatially extended systems are modelled
+by PDEs and become infinite-dimensional dynamical systems on
+function spaces.
+
+\begin{defn}{Flow and orbit}{flow}
+The \emph{flow} of \cref{eq:ode} is the family of maps
+$\{\Phi^t\}_{t\in\R}$ with $\Phi^t(\bm{x}_0)=\bm{x}(t)$. The
+\emph{orbit} through $\bm{x}_0$ is the set
+$\gamma(\bm{x}_0)=\{\Phi^t(\bm{x}_0):t\in\R\}$.
+\end{defn}
+
+\section{Linear systems and stability}
+For the linear ODE $\dot{\bm{x}}=\bm{A}\bm{x}$ the solution is
+$\bm{x}(t)=e^{t\bm{A}}\bm{x}_0$. The eigenvalues of $\bm{A}$ classify
+the origin: stable node, unstable node, saddle, focus, centre. For
+nonlinear systems, the \emph{Hartman--Grobman theorem} guarantees that,
+near a hyperbolic fixed point, the flow is topologically conjugate to
+its linearisation.
+
+\begin{thm}{Lyapunov stability}{lyapunov}
+Let $\bm{x}^\star$ be an equilibrium of \cref{eq:ode}. If there exists
+a continuously differentiable function $V:\Omega\to\R$ on a neighbourhood
+$\Omega\ni\bm{x}^\star$ with $V(\bm{x}^\star)=0$, $V(\bm{x})>0$ for
+$\bm{x}\neq\bm{x}^\star$, and $\dot V(\bm{x})\le 0$ on $\Omega$, then
+$\bm{x}^\star$ is Lyapunov stable. If $\dot V<0$ strictly, it is
+asymptotically stable.
+\end{thm}
+
+\section{Nonlinear phenomena}
+Nonlinearity introduces phenomena absent from linear theory:
+\begin{itemize}
+\item \textbf{Limit cycles:} isolated periodic orbits (Van der Pol).
+\item \textbf{Bifurcations:} qualitative changes of phase portraits as
+parameters vary --- saddle-node, transcritical, pitchfork, Hopf, period
+doubling, homoclinic.
+\item \textbf{Chaos:} sensitive dependence on initial conditions; the
+maximal Lyapunov exponent
+$\lambda_{\max}=\lim_{t\to\infty}\tfrac{1}{t}\log\|\delta\bm{x}(t)\|/\|\delta\bm{x}(0)\|$
+is positive.
+\item \textbf{Strange attractors:} fractal invariant sets attracting
+nearby orbits (Lorenz, R\"ossler, Chua).
+\end{itemize}
+
+\begin{insight}{Why dynamics matters for ML}
+Many learning algorithms are themselves dynamical systems: gradient
+descent is an Euler discretisation of gradient flow $\dot\theta=-\nabla
+L(\theta)$; momentum methods correspond to damped Hamiltonian
+dynamics; sampling algorithms (Langevin, HMC) are stochastic flows on
+parameter space. The mathematical machinery in this chapter is therefore
+both the \emph{object} and the \emph{tool} of SciML.
+\end{insight}
+
+\section{Hamiltonian and Lagrangian mechanics}
+Many physical systems possess a symplectic structure. Given a
+configuration manifold $Q$ with coordinates $\bm{q}$ and conjugate
+momenta $\bm{p}$, the \emph{Hamiltonian} $H(\bm{q},\bm{p},t)$ generates
+flow via
+\begin{equation}
+\dot{\bm{q}}=\frac{\partial H}{\partial \bm{p}},\qquad
+\dot{\bm{p}}=-\frac{\partial H}{\partial \bm{q}}.
+\end{equation}
+The 2-form $\omega=\dd\bm{q}\wedge\dd\bm{p}$ is preserved along the
+flow. Equivalently, the Lagrangian $L(\bm{q},\dot{\bm{q}},t)=T-V$
+satisfies the Euler--Lagrange equations
+\begin{equation}
+\frac{\dd}{\dd t}\frac{\partial L}{\partial \dot{\bm{q}}}-\frac{\partial L}{\partial \bm{q}}=0.
+\end{equation}
+Noether's theorem connects continuous symmetries to conserved
+quantities --- a principle that motivates both equivariant neural
+architectures (\cref{ch:equivariant}) and Hamiltonian/Lagrangian neural
+networks (\cref{ch:nodes}).
+
+\section{Partial differential equations}
+A PDE is a relation
+$\Nop[u](\bm{x},t)=0$ on a domain $\Omega\subset\R^d$, with boundary
+conditions on $\partial\Omega$ and (for evolution problems) initial
+conditions at $t=0$. Major classes:
+\begin{itemize}
+\item \textbf{Elliptic:} $-\Delta u=f$ (Poisson), steady-state.
+\item \textbf{Parabolic:} $\partial_t u=\Delta u+f$ (heat), diffusive.
+\item \textbf{Hyperbolic:} $\partial_t^2 u=c^2\Delta u$ (wave),
+finite propagation speed.
+\item \textbf{Conservation laws:} $\partial_t u+\nabla\cdot\bm{F}(u)=0$
+(Burgers, Euler, Navier--Stokes).
+\end{itemize}
+
+Well-posedness in the sense of Hadamard requires existence,
+uniqueness, and continuous dependence on data. For nonlinear hyperbolic
+laws, \emph{weak} (entropy) solutions handle shock formation; we will
+return to this when discussing PINN failure modes
+(\cref{sec:pinn-failure}).
+
+\section{Function spaces and the operator picture}
+Solutions of PDEs live in function spaces (Sobolev, Bochner, etc.).
+The map from problem data (coefficients, forcing, BCs, ICs) to solution
+\begin{equation}
+\Gop:\X\to\Y,\qquad a\mapsto u
+\end{equation}
+is the \emph{solution operator}. Most modern SciML --- especially
+neural operators (\cref{ch:operators}) --- aims to learn $\Gop$
+directly, rather than its values $u$ for fixed $a$.
+
+\begin{recipe}{Picking the right viewpoint}
+\begin{enumerate}
+\item Single trajectory, fixed parameters: ODE/PDE \emph{solver}.
+\item Family of trajectories, varying ICs: \emph{flow map} learning
+(neural ODE, time-stepping operator).
+\item Family of problem instances: \emph{solution operator} learning
+(DeepONet, FNO).
+\item Sparse data, unknown equation: \emph{system identification}
+(SINDy, UDEs).
+\end{enumerate}
+\end{recipe}
+
+\section{Stochastic dynamics}
+When noise matters, replace the ODE by an SDE
+\begin{equation}
+\dd\bm{X}_t = \bm{f}(\bm{X}_t,t)\dd t + \bm{\sigma}(\bm{X}_t,t)\dd \bm{W}_t,
+\end{equation}
+with $\bm{W}_t$ a Wiener process. The Fokker--Planck equation governs
+the density:
+\begin{equation}
+\partial_t p = -\nabla\!\cdot(\bm{f}p) + \tfrac{1}{2}\nabla\nabla:(\bm{\sigma}\bm{\sigma}^\T p).
+\end{equation}
+This connection between trajectories and densities is central to
+\emph{score-based diffusion models} (\cref{ch:generative}), where the
+reverse-time SDE is parameterised by a learned score
+$\nabla\log p_t$.
+
+\section{Inverse problems}
+Many SciML applications are inverse: given observations
+$\bm{y}=\Hop\bm{u}+\bm{\eta}$ of a state governed by a PDE, infer
+parameters or initial conditions. Tikhonov regularisation, Bayesian
+inference, and adjoint methods provide the classical scaffolding;
+deep learning provides priors (deep image prior, score priors) and
+amortised solvers.
+
+\section{Summary}
+Dynamical systems theory provides the language of states, flows,
+stability, and conservation. Numerical analysis (\cref{ch:numerics})
+provides tools to compute. Modern SciML threads neural networks
+through both: as solvers, as surrogates, as identifiers, and as priors.

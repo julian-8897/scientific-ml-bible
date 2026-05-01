@@ -1,0 +1,131 @@
+\chapter{Operator-Theoretic Learning: Koopman, DMD, SINDy}
+\label{ch:operator-theoretic}
+
+\epigraph{\itshape Linearity is a virtue. Even nonlinear systems are
+linear --- in infinite dimensions.}{Bernard Koopman, 1931}
+
+\section{The Koopman operator}
+For a discrete dynamical system $\bm{x}_{k+1}=\bm{F}(\bm{x}_k)$ on a
+state space $M$, the \emph{Koopman operator} $\Kop$ acts on observables
+$g:M\to\C$:
+\begin{equation}
+(\Kop g)(\bm{x}) = g(\bm{F}(\bm{x})).
+\end{equation}
+$\Kop$ is linear (even when $\bm{F}$ is nonlinear) but
+infinite-dimensional. Its spectrum encodes invariant sets, modes, and
+ergodic properties.
+
+\subsection{Dynamic Mode Decomposition (DMD)}
+Given snapshots $\bm{X}=[\bm{x}_0,\dots,\bm{x}_{m-1}]$,
+$\bm{Y}=[\bm{x}_1,\dots,\bm{x}_m]$, DMD seeks $\bm{A}$ minimising
+$\|\bm{Y}-\bm{A}\bm{X}\|_F$, giving $\bm{A}=\bm{Y}\bm{X}^\dagger$.
+The eigendecomposition of $\bm{A}$ yields DMD modes (spatial structures)
+and DMD eigenvalues (frequencies and growth rates).
+
+\subsection{Extended DMD (eDMD)}
+Lift state via a dictionary
+$\bm{\psi}(\bm{x})=(\psi_1(\bm{x}),\dots,\psi_N(\bm{x}))$ and
+regress $\bm{\psi}(\bm{x}_{k+1})\approx \bm{K}\bm{\psi}(\bm{x}_k)$.
+For polynomial dictionaries this recovers SINDy; for radial bases /
+random features this recovers kernel DMD.
+
+\subsection{Deep Koopman}
+Replace the dictionary by a learned encoder
+$\bm{\psi}_\theta:M\to\C^N$ with a \emph{linear} latent dynamics
+$\bm{z}_{k+1}=\bm{K}_\theta\bm{z}_k$ and a decoder
+$\bm{\phi}_\theta$. Loss combines reconstruction, prediction, and
+linearity terms~\cite{lusch2018koopman}.
+
+\begin{insight}{Why Koopman is powerful for ML}
+\begin{itemize}
+\item Eigenfunctions provide globally meaningful coordinates --
+``intrinsic'' phase variables.
+\item Linearity in latent space yields easy long-horizon prediction,
+control, and stability analysis.
+\item Captures multi-scale temporal structure via Koopman spectra.
+\end{itemize}
+But \emph{spectral pollution} --- spurious eigenvalues from finite
+truncation --- is a persistent danger. Modern remedies include
+ResDMD, EDMD-DL with closure error, and residual-based residual
+estimators.
+\end{insight}
+
+\section{Sparse identification of nonlinear dynamics (SINDy)}
+SINDy~\cite{brunton2016sindy} fits the ODE
+$\dot{\bm{x}}=\bm{f}(\bm{x})$ in a sparse linear combination of a
+candidate library $\bm{\Theta}(\bm{x})$:
+\begin{equation}
+\dot{\bm{X}} = \bm{\Theta}(\bm{X})\bm{\Xi},\qquad
+\bm{\Xi}=\argmin_{\bm{\Xi}}\|\dot{\bm{X}}-\bm{\Theta}(\bm{X})\bm{\Xi}\|_2^2 + \lambda\|\bm{\Xi}\|_0.
+\end{equation}
+$\ell_0$ is approximated by sequential thresholding ($\text{STLS}$),
+LASSO, or sparse relaxed regularised regression (SR3).
+
+\subsection{Variants}
+\paragraph{Weak-form / Integral SINDy.}
+Multiply the ODE by test functions and integrate by parts to avoid
+finite-difference noise on $\dot{\bm{x}}$. Weak-SINDy and PDE-FIND for
+PDEs.
+\paragraph{Constrained SINDy.}
+Enforce conservation, energy, or symmetry by linear constraints on
+$\bm{\Xi}$.
+\paragraph{Ensemble SINDy / E-SINDy.}
+Bootstrap the data and library to obtain robust models with uncertainty
+estimates.
+\paragraph{Implicit SINDy.}
+Identify rational models $f=\bm{\Theta}_n\bm{\xi}_n / \bm{\Theta}_d\bm{\xi}_d$.
+\paragraph{SINDy-AE.}
+Wrap SINDy in an autoencoder to discover dynamics in a learned
+coordinate system.
+
+\subsection{Pitfalls}
+\begin{pitfall}{Library construction is the whole game}
+SINDy is interpretable only if the true dynamics live in your library.
+Choosing too small a library forces wrong models; too large makes
+sparsity selection brittle. Domain knowledge wins.
+\end{pitfall}
+
+\section{Symbolic regression}
+Where SINDy fixes a candidate library, symbolic regression searches the
+space of expression trees (operators, variables, constants):
+\begin{itemize}
+\item \textbf{Genetic programming}: PySR, Eureqa.
+\item \textbf{AI Feynman}: combines neural fits, dimensional analysis,
+and combinatorial search to recover Feynman lectures' equations.
+\item \textbf{Transformer-based symbolic regression}: SymbolicGPT,
+NeSymRes, end-to-end equation generation.
+\item \textbf{KAN-SR}: Kolmogorov--Arnold networks (\cref{ch:hybrid-ude})
+yield analytic primitives via spline activations.
+\end{itemize}
+Symbolic regression provides interpretable physics --- closing the loop
+from data to equations.
+
+\section{Reservoir computing and echo state networks}
+Random nonlinear recurrent reservoirs followed by a linear readout fit
+chaotic dynamics surprisingly well, with $\Oh(\text{seconds})$ training
+time. Particularly good for short-term forecasting of high-dimensional
+spatiotemporal chaos (Lorenz-96, Kuramoto--Sivashinsky), and as a
+baseline against deep models.
+
+\section{Recipe: pick the right operator-theoretic tool}
+\begin{recipe}{Decision flow}
+\begin{enumerate}
+\item Have snapshots of a single trajectory and want modes? \emph{DMD}.
+\item Want a global linear model on lifted observables? \emph{eDMD /
+deep Koopman}.
+\item Suspect the dynamics are sparse polynomials in known variables?
+\emph{SINDy}.
+\item No idea of the right form, want a closed-form expression?
+\emph{symbolic regression}.
+\item Just want a fast forecaster on a chaotic system? \emph{reservoir
+computing} as baseline.
+\end{enumerate}
+\end{recipe}
+
+\section{Connections to neural operators}
+Koopman is, abstractly, an \emph{operator on observables}; FNO and
+DeepONet are \emph{operators on PDE solution states}. Both reformulate
+nonlinear dynamics as linear/operator problems; the difference is the
+ambient space (point observables vs.\ function fields). Several works
+connect the two perspectives, e.g.\ Koopman neural operators and
+spectral DMD-FNO hybrids.

@@ -1,0 +1,106 @@
+\chapter{Software, Datasets, and Benchmarks}
+\label{ch:software}
+
+\section{Software ecosystems}
+\subsection{Julia}
+\begin{itemize}
+\item \textbf{SciML.jl} (DifferentialEquations.jl, Lux.jl,
+DiffEqFlux.jl, ModelingToolkit.jl, NeuralPDE.jl, NeuralOperators.jl):
+the premier ecosystem for differentiable scientific computing,
+universal differential equations, and symbolic-numeric
+modelling~\cite{rackauckas2017diffeq}.
+\item \textbf{ModelingToolkit + ModelingToolkitNeuralNets}: symbolic
+PDE/DAE modelling with embedded neural blocks.
+\item \textbf{Optimization.jl, Lux.jl, Zygote.jl, Enzyme.jl}: forward,
+reverse, and source-to-source AD.
+\end{itemize}
+
+\subsection{Python / JAX}
+\begin{itemize}
+\item \textbf{JAX} + \textbf{Diffrax}: differentiable solvers (Tsit5,
+KenCarp, etc.) integrated with neural networks via
+Equinox/Flax/Haiku.
+\item \textbf{JAX-CFD, JAX-Fluids, JAX-MD, JAX-FEM}: fluid, molecular,
+and FEM solvers.
+\item \textbf{PhiFlow, Modulus}: NVIDIA's PINN/operator framework with
+multi-GPU support.
+\item \textbf{Neuraloperator (PyTorch)}: official FNO/TFNO
+implementation.
+\item \textbf{DeepXDE}: PINNs and DeepONets with multi-backend support.
+\end{itemize}
+
+\subsection{Other}
+\begin{itemize}
+\item \textbf{Firedrake / FEniCS / dolfin-adjoint}: differentiable FEM.
+\item \textbf{PyTorch Geometric, DGL}: GNN backbones.
+\item \textbf{e3nn, ESCNN}: equivariant network libraries.
+\item \textbf{TorchDiffEq, TorchSDE}: neural ODE/SDE in PyTorch.
+\end{itemize}
+
+\section{Datasets and benchmarks}
+\subsection{PDE benchmarks}
+\begin{itemize}
+\item \textbf{PDEBench}~\cite{takamoto2022pdebench}: advection, Burgers,
+Navier--Stokes (compressible/incompressible), Darcy, diffusion-reaction,
+shallow water; standardised metrics; widely cited.
+\item \textbf{The Well}~\cite{ohana2024well}: 15 TB / 16 datasets across
+fluids, MHD, biology, granular media; built explicitly for foundation
+operators.
+\item \textbf{PDEArena}: clean PyTorch implementations of FNO, U-Net,
+DeepONet on Navier--Stokes / shallow water.
+\item \textbf{BubbleML}: multiphase flows.
+\item \textbf{CFDBench, AirfRANS}: aerodynamics.
+\end{itemize}
+
+\subsection{Molecular / materials}
+\begin{itemize}
+\item \textbf{MD17, rMD17, MD22}: gas-phase MD trajectories.
+\item \textbf{OC20, OC22}: catalysis with millions of DFT calculations.
+\item \textbf{QM9, QMugs}: quantum-chemistry property prediction.
+\item \textbf{Matbench, JARVIS}: materials property prediction.
+\end{itemize}
+
+\subsection{Climate / weather}
+\begin{itemize}
+\item \textbf{ERA5}: ECMWF reanalysis, the de-facto training corpus for
+ML weather models.
+\item \textbf{WeatherBench 2}~\cite{rasp2024wb2}: standardised
+evaluation; benchmarks GraphCast, Pangu, FourCastNet, GenCast,
+NeuralGCM, etc.
+\item \textbf{ClimateBench, ClimSim}: climate emulation, subgrid
+parameterisation.
+\end{itemize}
+
+\subsection{Astrophysics}
+\begin{itemize}
+\item \textbf{CAMELS}: thousands of cosmological simulations with
+varying physics for ML training.
+\item \textbf{IllustrisTNG, EAGLE}: galaxy-formation simulation suites.
+\item \textbf{LSST, Euclid mocks}: synthetic survey data.
+\end{itemize}
+
+\section{Reproducibility checklist}
+\begin{recipe}{Publishing trustworthy SciML}
+\begin{enumerate}
+\item Code: open-source repository, fixed seeds, environment files.
+\item Data: list source, version, preprocessing, splits.
+\item Compute: report wall time, hardware, energy where possible.
+\item Baselines: at least one classical solver and one prior NN method.
+\item Metrics: error norm, calibration, OOD generalisation.
+\item Ablations: which inductive biases matter.
+\item Limitations: failure cases, regime of validity.
+\end{enumerate}
+\end{recipe}
+
+\section{Hardware considerations}
+\begin{itemize}
+\item GPUs (H100/H200/B200) for transformer/operator training; tensor
+cores reward large batched FFTs.
+\item TPUs (v5p) for very large foundation models (NeuralGCM,
+GraphCast).
+\item AMX / Apple Silicon for medium-scale prototyping (Mac mini M4
+remains highly capable for FNO and PINN prototyping with MPS or
+PyTorch--Metal).
+\item Mixed precision (BF16/FP16) for inference; \textbf{always train
+PINNs in FP64} (\cref{ch:pinns}).
+\end{itemize}

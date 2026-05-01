@@ -1,0 +1,166 @@
+\chapter{Physics-Informed Neural Networks}
+\label{ch:pinns}
+
+\epigraph{\itshape A PINN is a neural network whose loss function is a
+PDE.}{Raissi, Perdikaris, Karniadakis (2019)}
+
+\section{Formulation}
+Consider a PDE on $\Omega\times[0,T]$:
+\begin{align}
+\Nop[u](\bm{x},t)&=0 \quad \text{in } \Omega\times(0,T],\\
+\Bop[u](\bm{x},t)&=g(\bm{x},t) \quad \text{on } \partial\Omega\times[0,T],\\
+u(\bm{x},0)&=u_0(\bm{x}) \quad \text{in } \Omega.
+\end{align}
+A PINN parameterises $u\approx u_\theta:\R^{d+1}\to\R^k$ as a multilayer
+perceptron and minimises a composite loss~\cite{raissi2019pinn}
+\begin{equation}
+\Lop(\theta) = w_r\Lop_r + w_b\Lop_b + w_0\Lop_0 + w_d\Lop_d,
+\end{equation}
+where
+\begin{align}
+\Lop_r &=\frac{1}{N_r}\sum_i \big|\Nop[u_\theta](\bm{x}_i,t_i)\big|^2,\\
+\Lop_b &=\frac{1}{N_b}\sum_i \big|\Bop[u_\theta]-g\big|^2,\\
+\Lop_0 &=\frac{1}{N_0}\sum_i \big|u_\theta(\bm{x}_i,0)-u_0\big|^2,\\
+\Lop_d &=\frac{1}{N_d}\sum_i \big|u_\theta(\bm{x}_i,t_i)-u_i^{\text{obs}}\big|^2.
+\end{align}
+Derivatives appearing in $\Nop$ are obtained by automatic
+differentiation through the network.
+
+\section{Why it works (when it works)}
+The PINN loss imposes the strong-form PDE on a finite set of
+\emph{collocation points}. With sufficiently expressive $u_\theta$ and
+adequate optimisation, $u_\theta$ approaches a strong solution. The
+formulation is mesh-free, accommodates irregular geometries, and
+unifies forward and inverse problems --- inverse coefficients become
+trainable parameters.
+
+\section{Variants}
+\paragraph{XPINN / cPINN.}
+Domain decomposition: separate networks per subdomain stitched together
+by interface losses, enabling parallelism and capture of localised
+features~\cite{jagtap2020xpinn}.
+
+\paragraph{hp-VPINN.}
+Use the variational (weak) form with test functions, integrating by
+parts to reduce derivative orders --- helpful when solutions have low
+regularity.
+
+\paragraph{Causal PINN.}
+Re-weight the time-domain residual to enforce that the loss at later
+times is small only \emph{after} earlier times converge, avoiding
+non-causal solutions to time-evolution PDEs~\cite{wang2022causal}.
+
+\paragraph{NTK-based PINN.}
+The neural tangent kernel reveals spectral bias in PINN training:
+high-frequency residual modes converge slowly. Re-weighting based on
+the NTK eigenvalues fixes the imbalance~\cite{wang2022ntkpinn}.
+
+\paragraph{Self-adaptive / SA-PINN.}
+Per-point trainable weights $\lambda_i$ adversarially upweight hard
+collocation points~\cite{mcclenny2023sapinn}.
+
+\paragraph{PINN-LS, gPINN, PIELM.}
+Least-squares formulations, gradient-enhanced PINNs, and physics-informed
+extreme learning machines trade off flexibility for speed.
+
+\section{Failure modes}
+\label{sec:pinn-failure}
+
+PINNs are notoriously brittle. Documented failure modes include:
+\begin{enumerate}
+\item \textbf{Spectral bias} towards low frequencies; sharp gradients
+and shock fronts under-resolved.
+\item \textbf{Multi-objective imbalance}: residual, boundary, and data
+losses conflict; gradient pathologies emerge.
+\item \textbf{Stiffness in time}: optimiser converges to spurious steady
+states matching the residual at $t=0$ but not propagating.
+\item \textbf{Non-convex landscapes}: local minima where residual is
+small but solution is wrong.
+\item \textbf{Floating-point precision}: a 2025 result shows many
+``failure modes'' disappear when training is performed in
+\textsf{float64} rather than \textsf{float32}, because the L-BFGS
+convergence test is otherwise triggered prematurely~\cite{rethinking2025pinn}.
+\end{enumerate}
+
+\begin{pitfall}{The ``trivial solution'' trap}
+For homogeneous PDEs with zero forcing and inadequate boundary loss
+weighting, a PINN can converge to $u_\theta\equiv 0$. Always sanity-check
+the solution magnitude and inspect residual histograms by region.
+\end{pitfall}
+
+\subsection{Mitigations}
+\begin{recipe}{Hardening a PINN}
+\begin{enumerate}
+\item Use \textsf{float64}; verify L-BFGS convergence flags.
+\item Adaptive collocation: resample where residual is large (RAR,
+RAD).
+\item Loss balancing: NTK weights, gradient-norm balancing,
+SoftAdapt, ReLoBRaLo.
+\item Hard-constrain BCs/ICs by output transforms
+$u_\theta(\bm{x},t) = u_0(\bm{x}) + t\,\bm{N}_\theta$.
+\item Causal time-marching: train on expanding time windows.
+\item Fourier features / SIREN activations to combat spectral bias.
+\item Exact gradient computation; avoid \texttt{create\_graph=True}
+pitfalls in PyTorch.
+\end{enumerate}
+\end{recipe}
+
+\section{Inverse problems with PINNs}
+PINNs shine in data-assimilation regimes where partial measurements
+constrain unknown coefficients $\mu$ in $\Nop_\mu$. Joint optimisation
+of $(\theta,\mu)$ gives forward + inverse for free. This is why PINNs
+are popular in subsurface flow, biomechanics, and astrophysical fluid
+inference.
+
+\section{Theoretical guarantees}
+Universal approximation extends to PINNs under mild regularity, but
+\emph{trainability} is the binding constraint. Recent work bounds the
+generalisation error in terms of the residual loss, neural tangent
+kernel conditioning, and quadrature error of the collocation
+sampling~\cite{wang2022ntkpinn,deryck2024pinns}.
+
+\section{When to choose a PINN over alternatives}
+\begin{insight}{PINNs vs. neural operators vs. classical solvers}
+\begin{itemize}
+\item Single problem instance, smooth solution, sparse data, want
+mesh-free + inverse parameters: \emph{PINN}.
+\item Many problem instances, repeated queries: \emph{neural operator}
+(\cref{ch:operators}).
+\item One-shot accuracy, complex geometry, no parameter unknowns:
+classical FE/FV solver.
+\item Stiff multiscale + partial data: \emph{universal differential
+equations} (\cref{ch:hybrid-ude}).
+\end{itemize}
+\end{insight}
+
+\section{Code skeleton (JAX)}
+\begin{lstlisting}[language=Python,caption={Minimal PINN for 1D Burgers},label=lst:pinn]
+import jax, jax.numpy as jnp, optax
+from flax import linen as nn
+
+class MLP(nn.Module):
+    feats: tuple = (64,)*5
+    @nn.compact
+    def __call__(self, x):
+        for f in self.feats:
+            x = nn.tanh(nn.Dense(f)(x))
+        return nn.Dense(1)(x)
+
+def u_fn(params, x, t):
+    return model.apply(params, jnp.stack([x, t]))[0]
+
+def residual(params, x, t, nu=0.01/jnp.pi):
+    u   = u_fn(params, x, t)
+    u_t = jax.grad(u_fn, argnums=2)(params, x, t)
+    u_x = jax.grad(u_fn, argnums=1)(params, x, t)
+    u_xx= jax.grad(lambda p,x,t: jax.grad(u_fn,argnums=1)(p,x,t),argnums=1)(params,x,t)
+    return u_t + u*u_x - nu*u_xx
+\end{lstlisting}
+
+\section{Summary}
+PINNs remain a swiss-army knife when the equation is known, geometry is
+awkward, and data is scarce. Their reputation for fragility is partly
+fair and partly due to under-engineered training. With float64,
+adaptive sampling, balanced losses, and causal training, vanilla PINNs
+solve a remarkable range of problems --- a fact that the literature has
+recently re-affirmed~\cite{rethinking2025pinn}.

@@ -1,0 +1,123 @@
+\chapter{Uncertainty Quantification}
+\label{ch:uq}
+
+\epigraph{\itshape A prediction without uncertainty is a guess. A guess
+without uncertainty is malpractice.}{D.\ Saltzman}
+
+\section{Sources of uncertainty}
+\begin{itemize}
+\item \textbf{Aleatoric}: irreducible randomness in the data-generating
+process (turbulence, measurement noise).
+\item \textbf{Epistemic}: lack of knowledge about model parameters
+(reducible with more data).
+\item \textbf{Structural}: wrong model class --- often the largest
+contributor in SciML and the hardest to quantify.
+\end{itemize}
+A trustworthy SciML pipeline must acknowledge all three.
+
+\section{Bayesian deep learning}
+\subsection{Bayesian neural networks (BNNs)}
+Treat weights as random variables with prior $p(\theta)$ and posterior
+$p(\theta|\D)\propto p(\D|\theta)p(\theta)$. Approximations:
+\begin{itemize}
+\item \textbf{Variational inference}: mean-field, structured Gaussian,
+normalising-flow posteriors.
+\item \textbf{Laplace approximation}: $p(\theta|\D)\approx
+\mathcal{N}(\theta_{\text{MAP}},\bm{H}^{-1})$ via Hessian/GGN.
+\item \textbf{MCMC} (HMC, SGLD, SGNHT): asymptotically exact but costly.
+\end{itemize}
+
+\subsection{Bayesian PINNs}
+B-PINN~\cite{yang2021bpinn} samples from the posterior over
+$\theta$ given the residual + data likelihood, providing predictive
+intervals on PDE solutions. Used for noisy inverse problems and
+data-assimilation.
+
+\section{Deep ensembles}
+Train $K$ independent networks; average predictions and use the
+inter-model variance as uncertainty. Often the strongest baseline ---
+simple, calibrated, trivially parallel. Drawback: $K\times$ training
+and inference cost. Approximations: snapshot ensembles, BatchEnsemble,
+multi-input multi-output (MIMO).
+
+\section{Gaussian processes}
+The classical UQ workhorse. For a kernel $k(\bm{x},\bm{x}')$ and
+observations with noise $\sigma^2$, posterior mean and variance are
+analytic. Limitations: $\Oh(N^3)$ training. Modern remedies:
+\begin{itemize}
+\item Sparse / inducing-point methods (SVGP, FITC).
+\item Stochastic variational GPs.
+\item Deep kernel learning: GP head on a neural feature map.
+\item Neural processes / Conditional NPs as amortised meta-GPs.
+\end{itemize}
+GPs are particularly natural surrogates for expensive forward simulators
+and for Bayesian optimisation of physical experiments.
+
+\section{Conformal prediction}
+Distribution-free, finite-sample-valid prediction sets:
+\begin{equation}
+\Pr(y_{\text{new}}\in C_\alpha(\bm{x}_{\text{new}}))\ge 1-\alpha.
+\end{equation}
+Build a non-conformity score on a calibration set; set the prediction
+interval as the $(1-\alpha)$-quantile. Variants for regression
+(CQR, conformalised quantile regression), time series (split-conformal
+with weighted exchangeability), and PDEs (conformalised neural
+operators)~\cite{ma2024conformal}. Crucially, conformal works
+\emph{on top} of any predictor and gives marginal coverage with no
+distributional assumptions.
+
+\begin{insight}{Why conformal is special}
+Other UQ methods are calibrated only if the model is well-specified
+(BNNs, GPs). Conformal coverage holds under exchangeability
+\emph{regardless} of model correctness --- making it ideal for
+hardening ML surrogates that one does not fully trust.
+\end{insight}
+
+\section{Probabilistic operators and probabilistic PINNs}
+\begin{itemize}
+\item \textbf{Probabilistic FNO / DeepONet}: heteroscedastic outputs;
+ensemble FNOs; SDE-based latent operators.
+\item \textbf{Score-based UQ}: a diffusion prior + posterior sampling
+yields full predictive distributions for inverse PDE problems.
+\item \textbf{Monte Carlo dropout}: cheap approximation; usually
+overconfident.
+\end{itemize}
+
+\section{Calibration and evaluation}
+\begin{itemize}
+\item Reliability diagrams; Expected Calibration Error (ECE).
+\item Continuous Ranked Probability Score (CRPS) for ensembles.
+\item Negative log-likelihood (NLL) on held-out data.
+\item Coverage of prediction intervals; sharpness.
+\item Out-of-distribution (OOD) detection.
+\end{itemize}
+
+\section{Active learning and experimental design}
+Couple UQ with sampling: select new query points to minimise expected
+posterior variance (BALD, expected-information-gain). For SciML:
+\begin{itemize}
+\item Active learning for force-field training (NequIP-AL).
+\item Bayesian optimisation for PDE-parameter calibration.
+\item Multi-fidelity Bayesian optimisation when both cheap and
+expensive simulators are available.
+\end{itemize}
+
+\section{Practical guide}
+\begin{recipe}{UQ stack for a SciML deliverable}
+\begin{enumerate}
+\item Train a deterministic baseline; compute residuals on held-out data.
+\item Add an ensemble of $\ge 5$ models.
+\item Apply conformal prediction on a calibration split.
+\item If the model will be used for inverse problems, add a Bayesian
+or score-based posterior layer.
+\item Report CRPS / NLL / coverage --- never just RMSE.
+\end{enumerate}
+\end{recipe}
+
+\begin{pitfall}{Confusing aleatoric with epistemic}
+A heteroscedastic-output network estimates aleatoric noise. Adding
+ensembles or BNNs estimates epistemic. Plotting only the predictive
+variance without separating the two leads to incorrect inferences ---
+e.g., believing more data will reduce noise that is intrinsic to the
+process.
+\end{pitfall}

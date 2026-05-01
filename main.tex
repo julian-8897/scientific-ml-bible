@@ -1,0 +1,246 @@
+\documentclass[11pt,a4paper,openany]{book}
+
+% ---------- Encoding & Fonts ----------
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{textcomp}
+
+% ---------- Geometry ----------
+\usepackage[a4paper,margin=1.05in,headheight=14pt]{geometry}
+
+% ---------- Math ----------
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{bm}
+\usepackage{nicefrac}
+\usepackage{cancel}
+
+% ---------- Graphics & Color ----------
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{positioning,arrows.meta,shapes.geometric,fit,backgrounds,calc,decorations.pathmorphing}
+
+% ---------- Tables ----------
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{longtable}
+
+% ---------- Lists & Misc ----------
+\usepackage{enumitem}
+\setlist{itemsep=2pt,topsep=3pt,parsep=1pt}
+\usepackage{multicol}
+\usepackage{epigraph}
+\setlength\epigraphwidth{0.7\textwidth}
+
+% ---------- Code listings ----------
+\usepackage{listings}
+\definecolor{codebg}{RGB}{248,248,248}
+\definecolor{codekw}{RGB}{30,80,160}
+\definecolor{codestr}{RGB}{160,40,40}
+\definecolor{codecom}{RGB}{90,120,90}
+\definecolor{coderule}{RGB}{200,200,200}
+\lstset{
+  basicstyle=\ttfamily\footnotesize,
+  keywordstyle=\color{codekw}\bfseries,
+  stringstyle=\color{codestr},
+  commentstyle=\color{codecom}\itshape,
+  backgroundcolor=\color{codebg},
+  frame=single,
+  rulecolor=\color{coderule},
+  numbers=left,
+  numberstyle=\tiny\color{gray},
+  numbersep=8pt,
+  breaklines=true,
+  breakatwhitespace=true,
+  showstringspaces=false,
+  captionpos=b,
+  xleftmargin=14pt,
+  framexleftmargin=14pt,
+}
+
+% ---------- Boxes (theorems, definitions, pitfalls) ----------
+\usepackage[most]{tcolorbox}
+\tcbuselibrary{theorems,breakable,skins}
+
+\definecolor{accent}{HTML}{1F3A93}
+\definecolor{accent2}{HTML}{8E2DE2}
+\definecolor{accent3}{HTML}{0A8754}
+\definecolor{warn}{HTML}{B83227}
+\definecolor{soft}{HTML}{F4F6FA}
+
+\newtcbtheorem[number within=chapter]{defn}{Definition}
+{enhanced,breakable,colback=soft,colframe=accent,boxrule=0.6pt,
+ fonttitle=\bfseries\color{white},coltitle=white,
+ attach boxed title to top left={xshift=8pt,yshift=-3pt},
+ boxed title style={colback=accent,boxrule=0pt,sharp corners}}{def}
+
+\newtcbtheorem[number within=chapter]{thm}{Theorem}
+{enhanced,breakable,colback=soft,colframe=accent3,boxrule=0.6pt,
+ fonttitle=\bfseries\color{white},coltitle=white,
+ attach boxed title to top left={xshift=8pt,yshift=-3pt},
+ boxed title style={colback=accent3,boxrule=0pt,sharp corners}}{thm}
+
+\newtcolorbox{pitfall}[1]{enhanced,breakable,colback=red!4,
+ colframe=warn,boxrule=0.6pt,title={\bfseries Pitfall: #1},
+ fonttitle=\color{white},coltitle=white,
+ attach boxed title to top left={xshift=8pt,yshift=-3pt},
+ boxed title style={colback=warn,boxrule=0pt,sharp corners}}
+
+\newtcolorbox{insight}[1]{enhanced,breakable,colback=accent2!5,
+ colframe=accent2,boxrule=0.6pt,title={\bfseries Insight: #1},
+ fonttitle=\color{white},coltitle=white,
+ attach boxed title to top left={xshift=8pt,yshift=-3pt},
+ boxed title style={colback=accent2,boxrule=0pt,sharp corners}}
+
+\newtcolorbox{recipe}[1]{enhanced,breakable,colback=accent3!4,
+ colframe=accent3,boxrule=0.6pt,title={\bfseries Recipe: #1},
+ fonttitle=\color{white},coltitle=white,
+ attach boxed title to top left={xshift=8pt,yshift=-3pt},
+ boxed title style={colback=accent3,boxrule=0pt,sharp corners}}
+
+% ---------- Headers / TOC ----------
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\chaptermark}[1]{\markboth{\thechapter.\ #1}{}}
+\renewcommand{\sectionmark}[1]{\markright{\thesection\ #1}{}}
+\fancyhead[LE]{\small\nouppercase{\leftmark}}
+\fancyhead[RO]{\small\nouppercase{\rightmark}}
+\fancyfoot[LE,RO]{\thepage}
+\fancyfoot[LO,RE]{\small\itshape SciML \& Dynamical Systems Bible}
+\renewcommand{\headrulewidth}{0.4pt}
+
+\usepackage[titles]{tocloft}
+\renewcommand{\cftchapfont}{\bfseries\color{accent}}
+\renewcommand{\cftchappagefont}{\bfseries\color{accent}}
+
+% ---------- Chapter style ----------
+\usepackage[Bjornstrup]{fncychap}
+
+% ---------- Hyperref / cleveref ----------
+\usepackage[hidelinks,bookmarksnumbered,bookmarksopen,colorlinks,
+            linkcolor=accent,citecolor=accent3,urlcolor=accent2]{hyperref}
+\usepackage[capitalize,noabbrev]{cleveref}
+
+% ---------- Bibliography ----------
+\usepackage[backend=biber,style=numeric-comp,sorting=none,maxbibnames=6,maxcitenames=2,giveninits=true]{biblatex}
+\addbibresource{references.bib}
+
+% ---------- Math operators / shortcuts ----------
+\DeclareMathOperator*{\argmin}{arg\,min}
+\DeclareMathOperator*{\argmax}{arg\,max}
+\DeclareMathOperator{\E}{\mathbb{E}}
+\DeclareMathOperator{\Var}{Var}
+\DeclareMathOperator{\Cov}{Cov}
+\DeclareMathOperator{\KL}{KL}
+\DeclareMathOperator{\Tr}{Tr}
+\DeclareMathOperator{\diag}{diag}
+\DeclareMathOperator{\sgn}{sgn}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\C}{\mathbb{C}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\Oh}{\mathcal{O}}
+\newcommand{\Bop}{\mathcal{B}}
+\newcommand{\T}{\mathsf{T}}
+\newcommand{\dd}{\mathrm{d}}
+\newcommand{\D}{\mathcal{D}}
+\newcommand{\Lop}{\mathcal{L}}
+\newcommand{\Nop}{\mathcal{N}}
+\newcommand{\Gop}{\mathcal{G}}
+\newcommand{\Hop}{\mathcal{H}}
+\newcommand{\Kop}{\mathcal{K}}
+\newcommand{\Pop}{\mathcal{P}}
+\newcommand{\F}{\mathcal{F}}
+\newcommand{\X}{\mathcal{X}}
+\newcommand{\Y}{\mathcal{Y}}
+\newcommand{\param}{\theta}
+
+\title{\Huge\bfseries A Bible of Scientific Machine Learning\\[0.3em]
+\Large\itshape Dynamical Systems, Operators, and the Frontier of\\
+Physics-Aware Deep Learning}
+\author{Compiled for Julian C.\\\small PhD researcher, Astrophysics \& Machine Learning}
+\date{\today}
+
+\begin{document}
+
+% =========================================================
+\frontmatter
+
+\begin{titlepage}
+\centering
+\vspace*{2cm}
+
+\begin{tikzpicture}[remember picture,overlay]
+  \fill[accent] ([yshift=-1.0cm]current page.north west) rectangle ([yshift=-1.6cm]current page.north east);
+  \fill[accent2] ([yshift=-2.0cm]current page.north west) rectangle ([yshift=-2.06cm]current page.north east);
+\end{tikzpicture}
+
+\vspace{2.5cm}
+
+{\Huge\bfseries\color{accent} A Bible of Scientific\\[0.25em] Machine Learning}\\[1.2em]
+{\Large\itshape Dynamical Systems, Operators, and the Frontier\\[0.2em] of Physics-Aware Deep Learning}\\[3.5cm]
+
+\begin{tikzpicture}
+  \node[draw=accent,line width=0.8pt,rounded corners=4pt,inner sep=12pt,
+        fill=soft,minimum width=10cm,align=center]
+    {\large A reference manual covering classical dynamics,\\
+     PINNs, neural operators, Koopman/SINDy methods,\\
+     equivariant networks, generative surrogates,\\
+     uncertainty quantification, and 2024--2026 frontiers.};
+\end{tikzpicture}
+
+\vfill
+{\large Compiled for \textbf{Julian C.}}\\[0.3em]
+{\small PhD researcher --- Astrophysics \& Machine Learning}\\[0.3em]
+{\small \today}
+\end{titlepage}
+
+\cleardoublepage
+\thispagestyle{empty}
+\vspace*{4cm}
+\begin{center}
+\itshape
+\begin{minipage}{0.8\textwidth}
+\centering
+``All models are wrong, but some are useful.''\\[0.2em]
+--- George E.\ P.\ Box\\[1em]
+``It is the theory which decides what we can observe.''\\[0.2em]
+--- Albert Einstein\\[1em]
+``Mathematics is the art of giving the same name to different things.''\\[0.2em]
+--- Henri Poincar\'e
+\end{minipage}
+\end{center}
+\cleardoublepage
+
+\input{chapters/preface.tex}
+
+\tableofcontents
+\cleardoublepage
+
+% =========================================================
+\mainmatter
+
+\input{chapters/01_foundations.tex}
+\input{chapters/02_classical_numerics.tex}
+\input{chapters/03_neural_odes.tex}
+\input{chapters/04_pinns.tex}
+\input{chapters/05_neural_operators.tex}
+\input{chapters/06_operator_theoretic.tex}
+\input{chapters/07_hybrid_ude.tex}
+\input{chapters/08_geometric_equivariant.tex}
+\input{chapters/09_generative_pdes.tex}
+\input{chapters/10_uq.tex}
+\input{chapters/11_multiscale.tex}
+\input{chapters/12_software_benchmarks.tex}
+\input{chapters/13_emerging_trends.tex}
+\input{chapters/14_appendix.tex}
+
+% =========================================================
+\backmatter
+\printbibliography[heading=bibintoc,title={References \& Further Reading}]
+
+\end{document}

@@ -1,0 +1,112 @@
+\chapter{Hybrid Models and Universal Differential Equations}
+\label{ch:hybrid-ude}
+
+\epigraph{\itshape The differential equation is the model. The neural
+network is a closure.}{Rackauckas et al., SciML.ai}
+
+\section{Universal differential equations}
+A \emph{universal differential equation} (UDE) augments a known model
+with a neural surrogate for the unknown
+parts~\cite{rackauckas2020ude}:
+\begin{equation}
+\dot{\bm{x}} = \bm{f}(\bm{x},t;\mu) + \bm{N}_\theta(\bm{x},t),
+\end{equation}
+where $\bm{f}$ encodes physics we believe (kinematics, conservation),
+and $\bm{N}_\theta$ absorbs missing dynamics --- closure terms,
+unmodelled couplings, anomalous behaviour. Training is end-to-end via
+adjoint sensitivity through ODE solvers
+(\cref{ch:nodes,ch:numerics}).
+
+\subsection{Why hybrid beats both extremes}
+\begin{itemize}
+\item Pure ODEs over-fit assumed structure and ignore observed
+discrepancies.
+\item Pure neural networks waste capacity rediscovering known physics
+and generalise poorly out of distribution.
+\item UDEs combine: low-data efficiency from physics, flexibility from
+the network. The learned residual is often \emph{symbolic-regressible}
+into a closed-form correction.
+\end{itemize}
+
+\subsection{Discovery loop}
+\begin{recipe}{The Rackauckas--Edelman recipe}
+\begin{enumerate}
+\item Write down the known structural ODE/PDE.
+\item Add $\bm{N}_\theta$ to the residual or specific terms.
+\item Train end-to-end with adjoint gradients on observed data.
+\item Apply SINDy / symbolic regression to $\bm{N}_\theta$ to extract
+analytic closure.
+\item Substitute back, re-train, validate.
+\end{enumerate}
+\end{recipe}
+
+\section{Closure modelling}
+Turbulence, plasma, and climate codes often suffer from unresolved
+small scales whose effects must be parameterised. Neural closure models
+replace classical Reynolds/Boussinesq closures with neural networks:
+\begin{itemize}
+\item \textbf{LES--ML closures}: subgrid-stress predicted by CNN/GNN.
+\item \textbf{Climate parameterisations}: convection, cloud, radiation
+schemes (e.g.\ NeuralGCM~\cite{kochkov2024neuralgcm}).
+\item \textbf{Plasma turbulence}: gyrokinetic surrogates.
+\end{itemize}
+
+\paragraph{NeuralGCM.}
+A 2024 hybrid global atmosphere model that couples a differentiable
+dynamical core with neural parameterisations and matches state-of-the-art
+weather forecast skill at a fraction of the compute~\cite{kochkov2024neuralgcm}.
+A landmark for hybrid SciML at scale.
+
+\section{Differentiable simulators}
+A differentiable simulator exposes $\partial \text{output}/\partial
+\text{input}$ through the entire physical pipeline (PDE solve, contact,
+collision, etc.). Combined with neural augmentation, this gives
+gradient-based parameter inference, control, and design optimisation:
+\begin{itemize}
+\item JAX-MD, JAX-CFD, JAX-Fluids, Phiflow, Modulus, Brax.
+\item DiffTaichi, Warp, Nimble, Drake (robotics).
+\item Diffrax + Equinox (Julia/JAX) for differentiable solvers.
+\end{itemize}
+
+\section{Kolmogorov--Arnold Networks (KAN)}
+KANs~\cite{liu2024kan} replace the affine $\bm{W}\bm{x}+\bm{b}$ in MLPs
+with learnable univariate spline activations on edges, motivated by the
+Kolmogorov--Arnold representation theorem. They claim:
+\begin{itemize}
+\item Improved interpretability via per-edge function visualisation.
+\item Sometimes superior accuracy on PDE / symbolic-regression
+benchmarks at small parameter counts.
+\item Direct symbolic extraction by fitting splines to elementary
+functions.
+\end{itemize}
+\begin{pitfall}{KAN hype, KAN reality}
+Independent benchmarks have shown that the gap between KANs and well-tuned MLPs is much smaller, and training cost is higher. Treat KANs
+as one more architectural option, not a panacea.
+\end{pitfall}
+
+\section{Operator + physics hybrids}
+\begin{itemize}
+\item \textbf{PINO}: physics-informed neural operator combines FNO
+training data with PDE residuals.
+\item \textbf{PI-DeepONet}: residual loss for the trunk--branch
+decomposition.
+\item \textbf{Differentiable solver $\circ$ NN}: replace expensive
+solver substeps with neural surrogates inside an otherwise classical
+solver (multigrid smoothers, preconditioners, time-stepping).
+\end{itemize}
+
+\section{Equation-discovery pipelines}
+Modern SciML pipelines string together:
+\[
+\text{data} \to \text{denoising / smoothing} \to \text{candidate libraries}
+\to \text{sparse / symbolic fit} \to \text{validation}
+\]
+with neural surrogates entering wherever the bottleneck lies.
+Auto-MoDe and AI-Hilbert (NeurIPS 2024) automate large parts of this
+loop.
+
+\section{Summary}
+Hybrid SciML is arguably the most pragmatic part of the field:
+mechanistic backbone $+$ data-driven correction. It dominates
+applications where physics is partially known and computational budgets
+are real --- climate, biology, plasma, materials.

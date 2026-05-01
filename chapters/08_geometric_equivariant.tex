@@ -1,0 +1,108 @@
+\chapter{Geometric and Equivariant Deep Learning}
+\label{ch:equivariant}
+
+\epigraph{\itshape Symmetry, as wide or as narrow as you may define its
+meaning, is one idea by which man through the ages has tried to
+comprehend and create order, beauty, and perfection.}{Hermann Weyl}
+
+\section{Why symmetry matters}
+Physical systems exhibit symmetries: translations, rotations,
+reflections, Galilean boosts, gauge transformations. A model that
+respects these symmetries by construction (\emph{equivariant}) requires
+less data, generalises better, and respects conservation laws --- a
+direct consequence of Noether's theorem.
+
+\begin{defn}{Equivariance}{equiv}
+A map $\Phi:\X\to\Y$ is \emph{equivariant} with respect to a group $G$
+acting on $\X$ via $\rho_X$ and on $\Y$ via $\rho_Y$ if
+$\Phi(\rho_X(g)\bm{x}) = \rho_Y(g)\Phi(\bm{x})$ for all $g\in G$.
+Invariance is the special case $\rho_Y\equiv \mathrm{id}$.
+\end{defn}
+
+\section{Group-equivariant CNNs}
+G-CNNs generalise convolution: weights are functions on $G$ rather than
+$\R^d$, and convolution becomes integration over the group. Cohen \&
+Welling (2016) introduced the framework for finite groups
+($\mathbb{Z}_4$, dihedral). Steerable CNNs use representation theory to
+construct continuous-group equivariant filters.
+
+\section{$E(3)$ and $SE(3)$ equivariance}
+For 3D physics, $E(3)$ (translations + rotations + reflections) is the
+natural symmetry group. Two leading paradigms:
+
+\paragraph{Tensor field networks / SE(3)-Transformer / NequIP.}
+Activations are sums of irreducible representations
+$\mathbf{V}=\bigoplus_\ell \mathbf{V}^{(\ell)}$ of $SO(3)$. Layers
+combine these via tensor products and Clebsch--Gordan
+coefficients~\cite{thomas2018tfn,fuchs2020se3,batzner2022nequip}.
+
+\paragraph{E(n)-equivariant graph neural networks (EGNN).}
+Maintain scalar features $\bm{h}_i$ and equivariant coordinates
+$\bm{x}_i$; updates use only invariants like $\|\bm{x}_i-\bm{x}_j\|$.
+Lightweight and effective~\cite{satorras2021egnn}.
+
+\paragraph{Geometric algebra networks.}
+GATr (Brehmer et al.) operate in the projective geometric algebra of
+3D Euclidean space, encoding rotations, translations, and reflections
+naturally.
+
+\section{N-body dynamics}
+Equivariant networks dominate learned $n$-body simulators:
+\begin{itemize}
+\item \textbf{Molecular dynamics}: NequIP, Allegro, MACE, SO3krates,
+GemNet --- machine-learning force fields with $SO(3)$ equivariance.
+\item \textbf{Astrophysics}: equivariant graph networks for galaxy
+mergers, halo finders, cosmological parameter inference. Particularly
+relevant when conserving angular momentum and energy is critical for
+long-horizon stability.
+\item \textbf{Particle physics}: ParticleNet, LorentzNet (Lorentz
+equivariance) for jet tagging and event classification.
+\end{itemize}
+
+\begin{insight}{Equivariance as inductive bias}
+The single biggest lesson of geometric deep learning: \emph{the right
+inductive bias outweighs more data}. NequIP/Allegro reach DFT accuracy
+on chemistry tasks with $\sim$10$\times$ less data than non-equivariant
+counterparts.
+\end{insight}
+
+\section{Hamiltonian / Lagrangian + equivariance}
+Combining mechanical priors with symmetries gives the strongest
+extrapolation. Examples:
+\begin{itemize}
+\item Constrained Hamiltonian neural networks for spherical pendulums.
+\item Lagrangian neural networks with $SE(3)$ equivariance for
+articulated robotics.
+\item Symplectic + equivariant ODE-Nets for n-body simulations.
+\end{itemize}
+
+\section{Mesh-based and graph-based PDE surrogates}
+\paragraph{MeshGraphNets~\cite{pfaff2021mgn}}
+Learn dynamics on mesh graphs with edge-conditioned message passing;
+flexible across geometries; foundational for many CFD, soft-body, and
+cloth simulators.
+\paragraph{Lagrangian particle GNNs~\cite{sanchez2020graphnet}.}
+Treat particles as nodes; predict accelerations; integrate explicitly.
+Used for fluids, granular media.
+
+\section{Open challenges}
+\begin{itemize}
+\item Computational cost of high-$\ell$ tensor products (mitigated by
+MACE / SO3krates / Cartesian-tensor reformulations).
+\item Equivariance under \emph{approximate} symmetries (e.g.\ slight
+gauge breaking).
+\item Combining symmetry with geometric heterogeneity (boundaries,
+defects).
+\item Foundation models that are simultaneously equivariant and large.
+\end{itemize}
+
+\section{Recipe: choosing an equivariant model}
+\begin{recipe}{Equivariant architecture selection}
+\begin{enumerate}
+\item Symmetry group of your problem (E(3)? SE(3)? Lorentz? gauge?).
+\item Required output type (scalar invariant? vector? tensor?).
+\item Cost budget: EGNN $<$ MACE $<$ TFN/SE(3)-T.
+\item Conservation requirements: pair with HNN/LNN if energy/momentum
+conservation is crucial.
+\end{enumerate}
+\end{recipe}

@@ -1,0 +1,161 @@
+\chapter{Appendices}
+\label{ch:appendix}
+
+\section*{Appendix A: Automatic Differentiation in 30 Lines}
+\addcontentsline{toc}{section}{Appendix A: Automatic Differentiation}
+
+Automatic differentiation (AD) is the engine behind every method in
+this book. There are two primary modes:
+
+\paragraph{Forward mode.}
+Carries derivatives \emph{with} the primal computation, using dual
+numbers $a+b\epsilon$ where $\epsilon^2=0$. Cost: $\Oh(\dim\text{input})$
+times the primal. Best when input dimension is small.
+
+\paragraph{Reverse mode (backpropagation).}
+Records a tape during the forward pass; replays it backwards with
+accumulated cotangents. Cost: $\Oh(\dim\text{output})$. The dominant
+mode for ML where loss is scalar.
+
+\paragraph{Higher-order AD.}
+Required by PINNs (second derivatives in space, mixed time/space
+partials). Implementation must avoid graph-construction explosion;
+JAX's \texttt{jvp/vjp} composition and Diffrax/Equinox's higher-order
+support are best in class.
+
+\section*{Appendix B: Functional Analysis Cheat Sheet}
+\addcontentsline{toc}{section}{Appendix B: Functional Analysis Cheat Sheet}
+
+\begin{itemize}
+\item \textbf{Banach space}: complete normed vector space. Examples:
+$L^p,\;C^k,\;W^{k,p}$ (Sobolev).
+\item \textbf{Hilbert space}: Banach with inner product. Examples:
+$L^2,\;H^k=W^{k,2}$.
+\item \textbf{Sobolev embedding}: $W^{k,p}(\Omega)\hookrightarrow C^m(\bar\Omega)$
+when $kp>md$, $p>1$.
+\item \textbf{Trace theorem}: boundary values of $H^1$ functions live in
+$H^{1/2}(\partial\Omega)$.
+\item \textbf{Compact operators}: limit (in operator norm) of finite-rank
+operators; spectra are discrete with $0$ as only accumulation point.
+\item \textbf{Spectral theorem}: self-adjoint compact operators on a
+Hilbert space admit an orthonormal eigenbasis.
+\end{itemize}
+
+\section*{Appendix C: Stochastic Calculus in Half a Page}
+\addcontentsline{toc}{section}{Appendix C: Stochastic Calculus}
+
+\paragraph{It\^o's lemma.}
+For $\dd\bm{X}_t=\bm{f}\dd t+\bm{\sigma}\dd\bm{W}_t$ and $g\in C^{2,1}$,
+\[
+\dd g(\bm{X}_t,t) = \left(\partial_t g + \bm{f}\cdot\nabla g + \tfrac{1}{2}\Tr(\bm{\sigma}\bm{\sigma}^\T \nabla^2 g)\right)\dd t + (\nabla g)^\T\bm{\sigma}\dd\bm{W}_t.
+\]
+
+\paragraph{Fokker--Planck (forward Kolmogorov).}
+Density $p(\bm{x},t)$ obeys
+\[
+\partial_t p = -\nabla\cdot(\bm{f}p)+\tfrac{1}{2}\nabla\nabla:(\bm{\sigma}\bm{\sigma}^\T p).
+\]
+
+\paragraph{Anderson's reverse-time SDE.}
+The reverse-time process associated with the forward SDE above is
+\[
+\dd \bar{\bm{X}}_t = (\bm{f}-\bm{\sigma}\bm{\sigma}^\T\nabla\log p_t)\dd t + \bm{\sigma}\dd\bar{\bm{W}}_t,
+\]
+the foundation of score-based generative models (\cref{ch:generative}).
+
+\section*{Appendix D: Reading List by Topic}
+\addcontentsline{toc}{section}{Appendix D: Reading List}
+
+\begin{itemize}
+\item \textbf{Dynamical systems}: Strogatz (\emph{Nonlinear Dynamics and
+Chaos}); Guckenheimer \& Holmes; Hirsch--Smale--Devaney.
+\item \textbf{Numerical PDEs}: LeVeque (\emph{FV Methods}); Quarteroni;
+Trefethen (\emph{Spectral Methods in MATLAB}).
+\item \textbf{SciML overview}: Karniadakis et al.\ (\emph{Nature Reviews
+Physics}, 2021); Brunton \& Kutz (\emph{Data-Driven Science}); Cuomo et al.\
+(2022 PINN survey).
+\item \textbf{Operator learning}: Kovachki et al.\ (2023 review); Lu et
+al.\ (DeepONet); Li et al.\ (FNO).
+\item \textbf{Koopman/SINDy}: Mezi\'c (\emph{Annu.\ Rev.\ Fluid Mech.});
+Brunton, Budi\u{s}i\'c, Kaiser \& Kutz (Koopman review 2022).
+\item \textbf{Generative SciML}: Song \& Ermon SDE paper; Lipman flow
+matching; recent NeurIPS/ICLR proceedings on diffusion for PDEs.
+\item \textbf{Equivariant DL}: Bronstein et al.\ \emph{Geometric Deep
+Learning}; Cohen \& Welling; Batzner et al.\ (NequIP).
+\item \textbf{UQ}: Gal (BNNs thesis); Vovk \emph{Algorithmic Learning in
+a Random World} (conformal); Rasmussen \& Williams (GPs).
+\end{itemize}
+
+\section*{Appendix E: Glossary of Key Acronyms}
+\addcontentsline{toc}{section}{Appendix E: Glossary}
+
+\begin{multicols}{2}
+\small
+\begin{itemize}
+\item \textbf{AD} -- Automatic Differentiation
+\item \textbf{AFNO} -- Adaptive FNO
+\item \textbf{BNN} -- Bayesian Neural Network
+\item \textbf{CFL} -- Courant--Friedrichs--Lewy
+\item \textbf{CNF} -- Continuous Normalising Flow
+\item \textbf{DMD} -- Dynamic Mode Decomposition
+\item \textbf{DPOT} -- Denoising Pretrained Operator Transformer
+\item \textbf{EGNN} -- E(n)-Equivariant GNN
+\item \textbf{FNO} -- Fourier Neural Operator
+\item \textbf{GAOT} -- Geometry-Aware Operator Transformer
+\item \textbf{GCM} -- General Circulation Model
+\item \textbf{GNO} -- Graph Neural Operator
+\item \textbf{HMM} -- Heterogeneous Multiscale Method
+\item \textbf{HNN/LNN} -- Hamiltonian/Lagrangian NN
+\item \textbf{KAN} -- Kolmogorov--Arnold Network
+\item \textbf{MGN} -- MeshGraphNet
+\item \textbf{MPP} -- Multiple Physics Pretraining
+\item \textbf{NTK} -- Neural Tangent Kernel
+\item \textbf{ODE/PDE/SDE} -- Ordinary / Partial / Stochastic DE
+\item \textbf{PBFM} -- Physics-Based Flow Matching
+\item \textbf{PINN} -- Physics-Informed Neural Network
+\item \textbf{PINO} -- Physics-Informed Neural Operator
+\item \textbf{POD} -- Proper Orthogonal Decomposition
+\item \textbf{ROM} -- Reduced-Order Model
+\item \textbf{SFNO} -- Spherical FNO
+\item \textbf{SINDy} -- Sparse Identification of Nonlinear Dynamics
+\item \textbf{TFN} -- Tensor-Field Network
+\item \textbf{UDE} -- Universal Differential Equation
+\item \textbf{UQ} -- Uncertainty Quantification
+\item \textbf{XPINN/cPINN} -- Domain-decomposition PINN variants
+\end{itemize}
+\end{multicols}
+
+\section*{Appendix F: Method Taxonomy at a Glance}
+\addcontentsline{toc}{section}{Appendix F: Method Taxonomy}
+
+\begin{center}
+\begin{tikzpicture}[
+    node/.style={draw=accent,fill=soft,rounded corners=4pt,inner sep=5pt,
+                 align=center,font=\small\sffamily},
+    leaf/.style={draw=accent3,fill=accent3!8,rounded corners=3pt,
+                 inner sep=4pt,align=center,font=\footnotesize\sffamily},
+    arrow/.style={-Latex,thick,accent}]
+  \node[node] (root) {SciML methods};
+  \node[node, below left=1cm and 2.4cm of root] (eq) {Equation-driven};
+  \node[node, below=1cm of root] (op) {Operator-driven};
+  \node[node, below right=1cm and 2.4cm of root] (data) {Data-driven};
+
+  \draw[arrow] (root) -- (eq);
+  \draw[arrow] (root) -- (op);
+  \draw[arrow] (root) -- (data);
+
+  \node[leaf, below=0.6cm of eq] (pinn) {PINN, XPINN,\\PINN-LS, hp-VPINN};
+  \node[leaf, below=0.6cm of op] (no) {DeepONet, FNO,\\GNO, Transolver,\\Poseidon, MPP, DPOT};
+  \node[leaf, below=0.6cm of data] (sindy) {SINDy, DMD,\\Koopman, KAN-SR};
+  \node[leaf, below=0.6cm of pinn] (ude) {UDE, NeuralGCM,\\hybrid closures};
+  \node[leaf, below=0.6cm of no] (gen) {Diffusion-PDE,\\PBFM, GenCast};
+  \node[leaf, below=0.6cm of sindy] (sym) {Symbolic regression,\\AI Feynman, PySR};
+
+  \draw[arrow] (eq) -- (pinn);
+  \draw[arrow] (op) -- (no);
+  \draw[arrow] (data) -- (sindy);
+  \draw[arrow] (pinn) -- (ude);
+  \draw[arrow] (no) -- (gen);
+  \draw[arrow] (sindy) -- (sym);
+\end{tikzpicture}
+\end{center}

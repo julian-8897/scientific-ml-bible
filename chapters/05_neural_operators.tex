@@ -1,0 +1,147 @@
+\chapter{Neural Operators}
+\label{ch:operators}
+
+\epigraph{\itshape Operator learning is to function approximation what
+calculus is to arithmetic.}{Anandkumar, Stuart and collaborators}
+
+\section{Solution operators}
+The forward map of a parameterised PDE family is an operator
+\begin{equation}
+\Gop : a\in\mathcal{A} \;\longmapsto\; u\in\mathcal{U},
+\end{equation}
+between Banach spaces of functions. Where a PINN learns one $u$, a
+\emph{neural operator} learns $\Gop$. Once trained, evaluating $\Gop$
+on a new $a$ is a forward pass --- orders of magnitude faster than a
+fresh PDE solve.
+
+\section{DeepONet}
+DeepONet~\cite{lu2021deeponet} factorises the operator into branch and
+trunk networks:
+\begin{equation}
+\Gop[a](\bm{y}) \approx \sum_{k=1}^p b_k(a(\bm{x}_1),\dots,a(\bm{x}_m))\,t_k(\bm{y}),
+\end{equation}
+where the \emph{branch} $\bm{b}$ encodes the input function (sampled at
+sensors $\bm{x}_i$) and the \emph{trunk} $\bm{t}$ encodes the query
+point $\bm{y}$. The architecture is justified by a universal
+approximation theorem for nonlinear continuous operators (Chen \& Chen
+1995). Variants: POD-DeepONet, multiple-input DeepONet, physics-informed
+DeepONet.
+
+\section{Fourier Neural Operator (FNO)}
+\label{sec:fno}
+FNO~\cite{li2021fno} parameterises the operator as a sequence of layers
+\begin{equation}
+v_{\ell+1}(\bm{x}) = \sigma\!\left(\bm{W}v_\ell(\bm{x}) + \F^{-1}(\bm{R}_\ell\cdot \F v_\ell)(\bm{x})\right),
+\end{equation}
+where $\F$ is the Fourier transform and $\bm{R}_\ell$ is a learned
+truncated convolution kernel acting on the lowest $K$ modes. Key
+properties:
+\begin{itemize}
+\item Discretisation invariance: trained on one resolution, queried at
+another (with caveats).
+\item Quasi-linear cost via FFT: $\Oh(N\log N)$ per layer.
+\item Strong empirical performance on smooth periodic problems.
+\end{itemize}
+
+\subsection{Variants of FNO}
+\paragraph{Geo-FNO, Factorised FNO, Tensor-FNO.}
+Handle non-rectangular domains by warping geometries; factorise modes
+across dimensions; tensor-decompose the kernel.
+\paragraph{U-FNO, U-Net FNO.}
+Combine FNO with U-Net hierarchy for multiscale features.
+\paragraph{Spherical FNO}~\cite{bonev2023sfno}.
+Replace FFT with spherical harmonic transforms; used for
+state-of-the-art global weather emulators (FourCastNet, GraphCast
+hybrids).
+\paragraph{Adaptive FNO and AFNO.}
+Adapt mode truncation per token, used inside vision transformers.
+
+\begin{pitfall}{FNO discretisation invariance, with asterisks}
+Out-of-distribution behaviour at resolutions far from training is
+dataset-dependent. Aliasing, periodic-padding artefacts, and limited
+mode budgets can all break the ``train once, query anywhere'' promise.
+Always benchmark on multiple resolutions.
+\end{pitfall}
+
+\section{Graph Neural Operators}
+For unstructured meshes, GNOs~\cite{li2020gno,brandstetter2022mpneural}
+parameterise an integral operator
+\begin{equation}
+v_{\ell+1}(\bm{x}) = \sigma\!\left(\bm{W}v_\ell(\bm{x}) + \int_{B_r(\bm{x})}\kappa_\theta(\bm{x},\bm{y})v_\ell(\bm{y})\,\dd\bm{y}\right)
+\end{equation}
+via message passing on a graph built from the mesh. MeshGraphNet,
+GNN-FNO hybrids, and the message-passing PDE solver belong to this
+family.
+
+\section{Transformer-based operators}
+Transformers naturally handle variable-length, irregular inputs. Recent
+high-impact systems include:
+\begin{itemize}
+\item \textbf{GNOT, OFormer, GAOT}: cross-attention between query
+points and conditioning.
+\item \textbf{Transolver}: token-mixing in physical space with attention
+across slices.
+\item \textbf{DPOT, MPP, Poseidon}: transformer-based foundation models
+(\cref{ch:emerging}).
+\end{itemize}
+
+\paragraph{Poseidon}~\cite{herde2024poseidon} is a multiscale operator
+transformer pretrained on a heterogeneous mix of PDE families with
+\emph{time-conditioned layer norms} and a semi-group training loss; it
+demonstrates strong few-shot transfer to new PDEs.
+
+\section{Discretisation invariance: theory}
+A defining requirement of a \emph{neural operator} (vs.\ a
+discretisation-tied surrogate) is that it is well-defined as a map
+between function spaces, with finite-dimensional implementations
+recovered as projections~\cite{kovachki2023neural}. Universal
+approximation theorems exist for FNO, DeepONet, and graph operators
+under appropriate compactness assumptions.
+
+\section{Training data}
+\begin{recipe}{Building a neural-operator dataset}
+\begin{enumerate}
+\item Define the PDE family by sampling parameters/coefficients/ICs from
+a distribution that covers downstream use.
+\item Solve with a high-fidelity classical solver; store inputs $a_i$
+and solutions $u_i$ at multiple resolutions / time steps.
+\item Decide loss: relative $L^2$, $H^1$, or task-specific energy norms.
+\item For time-dependent operators, choose autoregressive (next-step) or
+direct (input-to-final) framing; combine with rollout regularisation.
+\item Augment with symmetries (translation, rotation, reflection) when
+the PDE allows.
+\end{enumerate}
+\end{recipe}
+
+\section{Beyond pure data: physics-informed operators}
+Add residual losses on the operator output:
+\begin{equation}
+\Lop_{\text{op}}=\E_{a}\big[\|\Gop_\theta[a]-u_a\|^2 + \lambda\|\Nop_a[\Gop_\theta[a]]\|^2\big].
+\end{equation}
+PI-DeepONet, PINO, and FNO-PINN hybrids report improved generalisation
+and faster convergence with limited data.
+
+\section{Limitations and open problems}
+\begin{itemize}
+\item Generalisation to unseen geometries / boundary conditions.
+\item High-frequency / shock fronts: most operators are biased to
+smooth solutions.
+\item Long-horizon temporal stability: errors accumulate in
+autoregressive rollout.
+\item Foundation-model scaling: data heterogeneity is harder than in
+language; tokenisation of physical fields is unsolved.
+\end{itemize}
+
+\section{Choosing an operator architecture}
+\begin{insight}{Quick decision guide}
+\begin{itemize}
+\item Periodic / regular grid, smooth solutions: \emph{FNO}.
+\item Sphere / earth-system: \emph{SFNO}.
+\item Branch--trunk separation, point queries, branched inputs:
+\emph{DeepONet}.
+\item Unstructured mesh / complex geometry: \emph{GNO / MGN /
+Transolver}.
+\item Few-shot transfer across PDE families: \emph{Poseidon, DPOT,
+MPP} (foundation operators).
+\end{itemize}
+\end{insight}

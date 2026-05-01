@@ -1,0 +1,133 @@
+\chapter{Classical Numerical Methods}
+\label{ch:numerics}
+
+\epigraph{\itshape A good approximation is one that holds together for a
+while, and then breaks in a way you understand.}{Folklore in numerical
+analysis}
+
+A SciML practitioner cannot escape numerical analysis: it furnishes
+the training data, the baselines, and the inductive biases for many
+neural-network methods.
+
+\section{Time integration of ODEs}
+Given $\dot{\bm{x}}=\bm{f}(\bm{x},t)$, denote the time step $h$.
+
+\subsection{Explicit Runge--Kutta}
+The classical $s$-stage RK scheme is
+\begin{equation}
+\bm{k}_i = \bm{f}\!\left(\bm{x}_n + h\sum_{j=1}^{i-1}a_{ij}\bm{k}_j,\; t_n+c_ih\right),\quad
+\bm{x}_{n+1}=\bm{x}_n+h\sum_{i=1}^s b_i\bm{k}_i.
+\end{equation}
+RK4 ($s=4$) achieves order four with the well-known Butcher tableau.
+Adaptive Dormand--Prince (DP5) embeds an order-4 estimator inside an
+order-5 step for error control.
+
+\subsection{Implicit and stiff solvers}
+Stiff systems --- where the spectrum of the Jacobian spans many orders
+of magnitude --- demand implicit methods. Backward differentiation
+formulas (BDF), implicit RK (Radau, SDIRK), and Rosenbrock methods are
+standard. The cost is a (possibly nonlinear) solve at each step.
+
+\begin{insight}{Why ``stiff'' bites neural ODEs}
+Neural ODEs use \emph{black-box} adaptive solvers and back-propagate
+through them. When the learned dynamics become stiff, solver step
+counts (and wall time) explode. Mitigations include semi-implicit
+adjoints, regularising stiffness, or restricting parameterisations
+(\cref{ch:nodes}).
+\end{insight}
+
+\subsection{Symplectic integrators}
+For Hamiltonian systems, preserving $\omega$ matters more than local
+order. \emph{St\"ormer--Verlet} and higher-order \emph{Yoshida}
+splittings have bounded energy error over exponentially long times --
+critical for n-body astrophysics.
+
+\begin{recipe}{Choosing a time integrator}
+\begin{enumerate}
+\item Non-stiff, non-conservative: RK4, DP5, Tsit5.
+\item Stiff: BDF, Radau IIA, Rosenbrock--Wanner.
+\item Hamiltonian / long-horizon energy fidelity: Verlet, Yoshida-4.
+\item Stochastic: Euler--Maruyama (order $\tfrac12$), Milstein
+(order $1$), stochastic Runge--Kutta.
+\end{enumerate}
+\end{recipe}
+
+\section{Spatial discretisation of PDEs}
+\subsection{Finite differences (FD)}
+Replace derivatives by stencils on a uniform grid:
+$\partial_x u_i \approx (u_{i+1}-u_{i-1})/(2h)$. Easy to implement,
+limited geometric flexibility, suffer at sharp gradients without
+upwinding or limiters.
+
+\subsection{Finite volumes (FV)}
+Integrate conservation laws over control volumes; fluxes at faces are
+reconstructed via Godunov / Roe / HLLC solvers. Native handling of
+shocks and discrete conservation. Backbone of CFD codes.
+
+\subsection{Finite elements (FE)}
+Project the weak form $\int_\Omega(\Lop u)v\,\dd\Omega=\int_\Omega
+fv\,\dd\Omega$ onto a finite-dimensional basis $\{\phi_j\}$.
+Galerkin / Petrov--Galerkin / DG variants. Excellent on complex
+geometries.
+
+\subsection{Spectral methods}
+Expand $u(\bm{x})=\sum_k \hat u_k\phi_k(\bm{x})$ in a global basis
+(Fourier on tori, Chebyshev on intervals). Exponential convergence
+for analytic solutions; foundational for Fourier neural operators
+(\cref{sec:fno}).
+
+\subsection{Mesh-free / particle methods}
+Smoothed particle hydrodynamics (SPH), radial basis functions (RBF),
+and reproducing kernel particle methods. Neural networks themselves can
+be viewed as a mesh-free basis.
+
+\section{Linear algebra and Krylov methods}
+Most PDE discretisations reduce to large sparse linear systems
+$\bm{A}\bm{u}=\bm{b}$. Conjugate gradient (CG), GMRES, BiCGStab, and
+multigrid are workhorses. Preconditioning ($\bm{M}^{-1}\bm{A}\bm{u}=
+\bm{M}^{-1}\bm{b}$) is often the difference between a usable and
+unusable method.
+
+\section{Adjoint and sensitivity analysis}
+For gradient-based learning of physical parameters, the
+\emph{continuous adjoint} computes
+$\dd L/\dd\mu$ at cost independent of $\dim\mu$ via a backward ODE:
+\begin{equation}
+\dot{\bm{\lambda}} = -\bm{\lambda}^\T \frac{\partial \bm{f}}{\partial \bm{x}} - \frac{\partial \ell}{\partial \bm{x}},\qquad
+\frac{\dd L}{\dd \mu} = \int_0^T \bm{\lambda}^\T \frac{\partial \bm{f}}{\partial \mu}\,\dd t.
+\end{equation}
+The discrete adjoint differentiates the solver itself; both are special
+cases of automatic differentiation (Appendix~A).
+
+\section{Stability, consistency, convergence}
+The Lax equivalence theorem ties these together for linear problems:
+\emph{a consistent finite-difference scheme is convergent if and only
+if it is stable}. The CFL condition $|c|h_t\le h_x$ for advection,
+the stiffness-driven step restriction for explicit parabolic
+schemes, and the von Neumann amplification analysis are all canonical.
+These constraints transfer almost verbatim to neural-network surrogates
+that mimic explicit time-stepping.
+
+\begin{pitfall}{Surrogate ``solvers'' that violate CFL}
+A learned time-stepper trained on $\Delta t$ slightly larger than the
+finest physical time scale may appear accurate in-distribution but
+diverge catastrophically when rolled out --- exactly the failure mode
+of an unstable explicit scheme. \emph{Train-time rollouts} or
+implicit-style architectures help.
+\end{pitfall}
+
+\section{Reduced-order models (ROMs)}
+For high-dimensional systems, project onto a low-dimensional subspace.
+Proper Orthogonal Decomposition (POD) builds modes from snapshots via
+SVD. Galerkin or Petrov--Galerkin projection yields a small ODE on the
+modes. ROMs are often the bridge between full-order numerics and
+neural-operator surrogates --- and provide Koopman/DMD with their data
+(\cref{ch:operator-theoretic}).
+
+\section{Summary}
+Classical numerics gives us a vocabulary --- consistency, stability,
+order, conservation, symplecticity --- that survives intact in modern
+SciML, even when the basis functions are replaced by neural
+networks. The interesting question is not whether to abandon classical
+methods, but \emph{which of their structural properties to preserve}
+inside a learned model.

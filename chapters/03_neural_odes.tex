@@ -1,0 +1,123 @@
+\chapter{Neural ODEs, CDEs, and SDEs}
+\label{ch:nodes}
+
+\epigraph{\itshape A residual block is a discrete Euler step. Take the
+limit and you have an ODE.}{Chen, Rubanova, Bettencourt, Duvenaud (2018)}
+
+\section{From ResNets to Neural ODEs}
+A residual block computes
+$\bm{h}_{n+1}=\bm{h}_n+\bm{f}_\theta(\bm{h}_n)$. Treating depth as time
+and taking $\Delta t\to 0$ gives the \emph{neural ODE}~\cite{chen2018neuralode}:
+\begin{equation}
+\frac{\dd \bm{h}(t)}{\dd t}=\bm{f}_\theta(\bm{h}(t),t),\qquad
+\bm{h}(0)=\bm{x}.
+\end{equation}
+The ``forward pass'' is an ODE solve from $0$ to $T$. Memory cost is
+$\Oh(1)$ in the number of steps because gradients are computed by
+solving a backward adjoint ODE rather than storing intermediate states.
+
+\subsection{Adjoint method}
+Define the loss $L(\bm{h}(T))$. Introduce the adjoint
+$\bm{a}(t)=\partial L/\partial \bm{h}(t)$, which satisfies
+\begin{equation}
+\frac{\dd \bm{a}(t)}{\dd t}=-\bm{a}(t)^\T \frac{\partial \bm{f}_\theta}{\partial \bm{h}}.
+\end{equation}
+The parameter gradient is
+$\dd L/\dd\theta=-\int_0^T \bm{a}(t)^\T (\partial \bm{f}_\theta/\partial\theta)\,\dd t$.
+This is the continuous-time analogue of backpropagation.
+
+\begin{pitfall}{Adjoint instability}
+The continuous adjoint can be numerically inaccurate when the forward
+solver uses adaptive step control or interpolated dense output. The
+\emph{interpolated} or \emph{checkpointed} adjoint, and JAX/PyTorch
+\texttt{torchdiffeq} backsolve, mitigate this. For chaotic systems,
+adjoints diverge along Lyapunov directions; consider shadowing /
+ensemble adjoints.
+\end{pitfall}
+
+\section{Variants and architectures}
+\paragraph{Augmented neural ODEs}
+The flow of an ODE is a homeomorphism, so a neural ODE cannot represent
+maps that change topology. Augmenting the state with extra dimensions
+$\bm{a}(0)=\bm{0}$ restores expressivity~\cite{dupont2019anode}.
+
+\paragraph{Latent ODEs and continuous normalising flows.}
+For irregular time series and density estimation, model dynamics in a
+latent space and decode~\cite{rubanova2019latentode}. Continuous
+normalising flows (CNFs) use the instantaneous change-of-variables
+formula
+$\dd\log p/\dd t=-\Tr(\partial \bm{f}/\partial \bm{h})$ to evaluate
+likelihoods.
+
+\paragraph{Neural CDEs.}
+For irregular time series, treat the data path $\bm{X}(t)$ as a
+control and integrate
+$\dd\bm{h}(t)=\bm{f}_\theta(\bm{h}(t))\,\dd\bm{X}(t)$ in the sense of
+controlled differential equations~\cite{kidger2020ncde}.
+
+\paragraph{Neural SDEs.}
+Add Brownian motion: $\dd\bm{h}=\bm{f}_\theta\,\dd t+\bm{\sigma}_\theta\,\dd\bm{W}_t$.
+Trainable via Wasserstein matching, KL with reference SDE, or score-matching;
+foundational for generative diffusion (\cref{ch:generative}).
+
+\section{Hamiltonian and Lagrangian neural networks}
+Architectural priors that respect mechanics:
+\begin{itemize}
+\item \textbf{HNN}~\cite{greydanus2019hnn}: parameterise $H_\theta(\bm{q},\bm{p})$;
+integrate $\dot{\bm{q}}=\partial_{\bm{p}}H_\theta$,
+$\dot{\bm{p}}=-\partial_{\bm{q}}H_\theta$.
+\item \textbf{LNN}~\cite{cranmer2020lnn}: parameterise $L_\theta(\bm{q},\dot{\bm{q}})$
+and impose Euler--Lagrange equations.
+\item \textbf{Symplectic ODE-Net, Constrained HNN}: enforce constraints
+and conservation explicitly.
+\end{itemize}
+These networks generalise far beyond their training horizon precisely
+because they encode the right invariant.
+
+\section{ODE-based deep generative models}
+\subsection{Continuous normalising flows (CNF)}
+Train $\bm{f}_\theta$ so that the pushforward of a base density
+matches the data density:
+\begin{equation}
+\log p_\theta(\bm{x})=\log p_0(\bm{h}(0)) - \int_0^T \nabla\!\cdot\bm{f}_\theta(\bm{h}(t),t)\,\dd t.
+\end{equation}
+\subsection{FFJORD and Hutchinson trace estimators}
+Replace the exact trace by a Hutchinson estimator
+$\Tr(\bm{J})\approx \E_{\bm{\epsilon}\sim\mathcal{N}}[\bm{\epsilon}^\T\bm{J}\bm{\epsilon}]$ for tractable training.
+
+\subsection{Flow matching and stochastic interpolants}
+Recent advances~\cite{lipman2023flowmatching,albergo2023interpolants}
+train CNFs by regressing onto a target velocity field defined by a
+prescribed interpolation between base and data distributions, avoiding
+expensive ODE simulation during training. Discussed at length in
+\cref{ch:generative}.
+
+\section{Practical training tips}
+\begin{recipe}{Training a neural ODE end-to-end}
+\begin{enumerate}
+\item Normalise inputs/outputs; centre time near zero.
+\item Start with a permissive solver (Tsit5, atol/rtol $10^{-3}$) and
+tighten as training progresses.
+\item Use the \emph{checkpointed adjoint} for long horizons; the
+\emph{recursive checkpoint} for memory.
+\item Add Jacobian/Frobenius penalties to discourage stiffness.
+\item Curriculum on $T$: train on short windows, extend gradually.
+\end{enumerate}
+\end{recipe}
+
+\section{Where neural ODEs shine and where they struggle}
+\textbf{Strengths:} natural for irregular time series, continuous-depth
+generative modelling, mechanistic priors via HNN/LNN, smooth and
+invertible models.\\
+\textbf{Weaknesses:} high wall-clock cost from solver calls;
+representation limited to homeomorphisms (without augmentation);
+delicate adjoint behaviour on stiff or chaotic dynamics.
+
+\begin{insight}{Neural ODE = parametric differential equation}
+The most productive way to think about neural ODEs is not as a deep
+network whose depth is continuous, but as a \emph{parametric ODE family
+fitted to data}. This perspective unifies them with Universal
+Differential Equations (\cref{ch:hybrid-ude}), system identification
+(\cref{ch:operator-theoretic}), and operator learning
+(\cref{ch:operators}).
+\end{insight}

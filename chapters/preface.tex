@@ -1,0 +1,61 @@
+\chapter*{Preface}
+\addcontentsline{toc}{chapter}{Preface}
+\markboth{Preface}{Preface}
+
+Scientific Machine Learning (SciML) is the discipline that fuses the
+\emph{inductive bias of physics} with the \emph{expressive flexibility
+of modern deep learning}. Where classical numerical analysis treats the
+governing equations of nature as the primary object and data as a
+secondary product, and where pure machine learning treats data as
+primary and equations as optional, SciML insists on the dialogue
+between the two. The result is a family of methods --- physics-informed
+neural networks, neural operators, Koopman embeddings, universal
+differential equations, equivariant networks, diffusion-based
+surrogates, foundation models for physics --- that are reshaping how
+scientists model complex dynamical systems.
+
+\section*{Who this is for}
+This document is written for advanced graduate students and researchers
+working at the intersection of dynamical systems, numerical analysis,
+and deep learning. It assumes familiarity with multivariable calculus,
+linear algebra, ODE/PDE theory, and the basic apparatus of supervised
+deep learning (backpropagation, optimisation, common architectures).
+
+\section*{How to read it}
+The book is structured as a reference. Part~I (Chapters~1--2) lays the
+mathematical foundations of dynamical systems and classical
+numerics. Part~II (Chapters~3--7) covers the core SciML toolkit. Part~III
+(Chapters~8--11) addresses geometric, generative, and probabilistic
+extensions. Part~IV (Chapters~12--13) surveys software, benchmarks,
+and emerging trends through the 2024--2026 horizon. The appendix
+(Chapter~14) collects functional analysis, automatic differentiation,
+and stochastic calculus prerequisites.
+
+Theorems, definitions, recipes, pitfalls, and insights are colour-coded
+throughout to help the reader scan rapidly:
+
+\begin{recipe}{Pseudocode and step-by-step procedures}
+Practical workflows live in green recipe boxes.
+\end{recipe}
+\begin{insight}{Conceptual remarks}
+Purple boxes flag conceptual subtleties or unifying perspectives.
+\end{insight}
+\begin{pitfall}{Things that go wrong}
+Red boxes highlight failure modes that have caught practitioners.
+\end{pitfall}
+
+\section*{Notation}
+We follow standard conventions: bold lowercase for vectors
+($\bm{x}\in\R^d$), bold uppercase for matrices ($\bm{A}$), calligraphic
+for operators and function spaces ($\mathcal{L},\mathcal{G},\mathcal{H}$).
+Time is denoted $t$, spatial coordinates $\bm{x}$ or $\bm{\xi}$.
+Neural network parameters are $\theta$. Probability density functions
+are $p(\cdot)$. Expectations are $\E[\cdot]$. The differential
+operator is $\partial$, the gradient $\nabla$, the Laplacian $\Delta$,
+and the divergence $\nabla\cdot$.
+
+\section*{Caveats}
+SciML moves fast. Where possible we highlight \emph{stable principles}
+rather than transient implementations. Citations point to canonical
+references; the field's pace means new results may already supersede
+specific benchmarks by the time of reading.
